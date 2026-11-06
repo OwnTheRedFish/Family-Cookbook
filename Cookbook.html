@@ -3,7 +3,7 @@
 <head>
   <script src="devconsole.js"></script>
   
-  <!-- Firebase SDK Compatibility Libraries (Required for cloud database connection) -->
+  <!-- Firebase SDK Compatibility Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -46,6 +46,46 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* Access Gate Overlay */
+    #accessGateModal {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg-paper);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    #accessGateModal.unlocked {
+      display: none;
+    }
+
+    .gate-card {
+      background-color: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      max-width: 440px;
+      width: 100%;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .gate-card h2 {
+      font-family: var(--font-serif);
+      font-weight: normal;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .gate-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
     }
 
     /* Header & Banner */
@@ -833,7 +873,7 @@
       }
     }
 
-    /* Print Cookbook Styles */
+    /* Print Styles */
     @media print {
       header, .sidebar, .toolbar, .modal-footer, .scale-buttons, .header-actions {
         display: none !important;
@@ -860,12 +900,17 @@
   </style>
 </head>
 <body>
-<!-- WCT-UNSHIPPED-BANNER:START -->
-<div id="wct-unshipped-banner" style="background:linear-gradient(90deg,#c0392b,#e74c3c);color:#fff;text-align:center;padding:6px 12px;font-family:system-ui,-apple-system,sans-serif;font-weight:bold;font-size:12px;line-height:1.2;position:fixed;top:0;left:0;right:0;z-index:999999;box-shadow:0 1px 4px rgba(0,0,0,0.25);">
-  ⚠️ Not Secured – Ship in Forge before entering CUI/sensitive data
-</div>
-<style id="wct-unshipped-banner-style">body { padding-top: 30px !important; }</style>
-<!-- WCT-UNSHIPPED-BANNER:END -->
+
+  <!-- Family Access Passphrase Gate -->
+  <div id="accessGateModal">
+    <div class="gate-card">
+      <h2>👪 Family Kitchen</h2>
+      <p>Enter the Clemons Family Passphrase to open the cookbook.</p>
+      <div id="gateErrorBanner" class="status-banner" style="margin-bottom: 1rem;"></div>
+      <input type="password" id="familyPasscodeInput" class="text-input" placeholder="Enter passphrase..." style="text-align: center; margin-bottom: 1rem;">
+      <button type="button" class="btn btn-primary" id="btnSubmitPasscode" style="width: 100%; justify-content: center;">Enter Cookbook</button>
+    </div>
+  </div>
 
   <header>
     <div class="header-inner">
@@ -962,7 +1007,7 @@
         <h2 id="detailModalTitle">Recipe Title</h2>
         <div style="display:flex; gap:0.5rem;">
           <button type="button" class="btn btn-light btn-sm" id="btnPrintRecipe">🖨️ Print Page</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btnEditCurrentRecipe">✏️ Edit How I Cook It</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnEditCurrentRecipe">✏️ Edit Recipe</button>
           <button type="button" class="btn btn-danger btn-sm" id="btnDeleteCurrentRecipe">🗑️ Delete</button>
           <button type="button" class="btn btn-light btn-sm" id="btnCloseDetailModal">✕ Close</button>
         </div>
@@ -989,7 +1034,7 @@
           </div>
           <div class="import-box-body">
             <p class="import-hint">
-              Copy any recipe from a website, blog, or message and paste it below. We will automatically extract the recipe title, prep/cook times, servings, structured ingredients (quantities, units, items, prep notes), and step-by-step instructions for you!
+              Copy any recipe from a website, blog, or message and paste it below. It will automatically extract the title, prep/cook times, servings, ingredients (with fractions), and directions!
             </p>
             <textarea id="rawRecipePasteInput" class="textarea-input" rows="7" placeholder="Paste your copied recipe text here...&#10;&#10;Example:&#10;Grandma's Best Lemon Bars&#10;Prep Time: 15 mins | Cook Time: 35 mins | Servings: 12&#10;&#10;Ingredients:&#10;2 cups all-purpose flour, sifted&#10;1/2 cup powdered sugar&#10;1/3 cup unsalted butter, softened&#10;4 large eggs, beaten&#10;&#10;Instructions:&#10;1. Preheat oven to 350°F and line a baking pan.&#10;2. Mix flour, sugar, and butter until crumbly and press into pan."></textarea>
             <div class="import-actions">
@@ -1111,7 +1156,7 @@
     </div>
   </div>
 
-  <!-- MODAL 3: Customize Cookbook Title & Dedication for Kids -->
+  <!-- MODAL 3: Customize Cookbook Title & Dedication -->
   <div class="modal-backdrop" id="dedicationModal">
     <div class="modal-panel" style="max-width: 600px;">
       <div class="modal-header">
@@ -1138,20 +1183,28 @@
     (function () {
       'use strict';
 
+      // =========================================================================
+      // 🔒 SECURITY KEYS & PASSWORDS
+      // Custom credentials to protect your database access.
+      // =========================================================================
+      const FAMILY_PASSPHRASE = "ClemonsKitchen"; // Give this to your family to access
+      const ADMIN_DELETE_PIN = "7492";            // Keep this secret: only you can delete recipes
+
+      // Firebase Config containing your live credentials
       const firebaseConfig = {
         apiKey: "AIzaSyCBwJnB3TmTGvqnbt_WdYvzo2aUKp_7rhk",
         authDomain: "clemons-family-cookbook.firebaseapp.com",
         projectId: "clemons-family-cookbook",
-        storageBucket: "clemons-family-cookbook.firebasestorage.app"",
+        storageBucket: "clemons-family-cookbook.firebasestorage.app",
         messagingSenderId: "232806060471",
-        appId: "1:232806060471:web:d320e16c5cafe10d2b1832"
+        appId: "1:232806060471:web:d320e16c5cafe10d2b1832",
+        measurementId: "G-9LSTPRDZXJ"
       };
 
-      // Initialize Firebase App & Firestore Database instance
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Traditional progression through the day
+      // Meal Types Order definition
       const MEAL_TYPES_ORDER = [
         'Breakfast',
         'Brunch',
@@ -1163,7 +1216,6 @@
         'Beverages'
       ];
 
-      // Normalization helper for backward compatibility
       function normalizeMealType(val) {
         if (!val) return 'Dinner';
         if (MEAL_TYPES_ORDER.includes(val)) return val;
@@ -1179,7 +1231,7 @@
         return legacyMap[val] || val;
       }
 
-      // Default Starter Recipes (used only as a template if the Database collection is empty)
+      // Starter Templates (loaded only if Firestore database collections are empty)
       const DEFAULT_RECIPES = [
         {
           title: 'Cast-Iron Buttermilk & Cardamom Pancakes',
@@ -1219,52 +1271,10 @@
               tip: 'Wait until bubbles pop on top and stay open before flipping once.'
             }
           ]
-        },
-        {
-          title: '15-Minute Sizzling Ginger-Scallion Noodles',
-          mealType: 'Lunch',
-          origin: 'Japanese',
-          course: 'Main Dish',
-          servings: 4,
-          prepMins: 10,
-          cookMins: 5,
-          tags: ['Quick', 'Vegan', 'Vegetarian', 'Weeknight'],
-          favorite: true,
-          story: 'When everyone gets home hungry and we need real food on the table in 15 minutes flat, this beats takeout every single time.',
-          myAdjustments: 'I use 3 tablespoons of avocado oil, 1 tablespoon of toasted sesame oil, and a generous spoonful of crispy chili crunch.',
-          sourceUrl: '',
-          updatedAt: 1710000002000,
-          ingredients: [
-            { amount: '12', unit: 'oz', item: 'fresh wheat noodles or ramen noodles', note: '' },
-            { amount: '2', unit: 'bunches', item: 'scallions (green onions)', note: 'thinly sliced, whites & greens separated' },
-            { amount: '2', unit: 'tbsp', item: 'fresh ginger', note: 'peeled and finely julienned' },
-            { amount: '3', unit: 'tbsp', item: 'neutral high-heat oil', note: 'avocado or peanut' },
-            { amount: '1', unit: 'tbsp', item: 'toasted sesame oil', note: '' },
-            { amount: '2.5', unit: 'tbsp', item: 'low-sodium soy sauce', note: '' },
-            { amount: '1', unit: 'tsp', item: 'rice vinegar', note: '' }
-          ],
-          steps: [
-            {
-              instruction: 'Place the finely minced ginger and sliced scallion whites in a heatproof ceramic or metal bowl.',
-              tip: 'Make sure the bowl is heat-safe before pouring hot oil!'
-            },
-            {
-              instruction: 'Heat the neutral oil in a small saucepan until shimmering, then carefully pour it directly over the ginger and scallions so it sizzles furiously.',
-              tip: 'The hot oil instantly cooks out the raw bite of the ginger and perfumes the kitchen.'
-            },
-            {
-              instruction: 'Stir soy sauce, toasted sesame oil, rice vinegar, and scallion greens into the aromatic oil.',
-              tip: ''
-            },
-            {
-              instruction: 'Boil noodles until tender, drain well, and toss immediately in the bowl with the sizzling scallion sauce.',
-              tip: 'Top with a fried egg or shredded rotisserie chicken for extra protein.'
-            }
-          ]
         }
       ];
 
-      // Application State (Synced live with Firestore)
+      // Application State variables
       let recipes = [];
       let cookbookMeta = {
         title: 'The Clemons Family Cookbook',
@@ -1286,7 +1296,26 @@
       let currentEditingRecipeId = null;
       let currentScaleMultiplier = 1;
 
-      // Utility: Safe HTML escaping
+      // Access Gate Check
+      function checkAccessGate() {
+        const storedAuth = sessionStorage.getItem('clemons_cookbook_authorized');
+        if (storedAuth === 'true') {
+          document.getElementById('accessGateModal').classList.add('unlocked');
+        }
+      }
+
+      function handlePasscodeSubmit() {
+        const input = document.getElementById('familyPasscodeInput').value.trim();
+        const errBanner = document.getElementById('gateErrorBanner');
+        if (input === FAMILY_PASSPHRASE) {
+          sessionStorage.setItem('clemons_cookbook_authorized', 'true');
+          document.getElementById('accessGateModal').classList.add('unlocked');
+        } else {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Incorrect passphrase. Please try again.';
+        }
+      }
+
       function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str)
@@ -1297,7 +1326,7 @@
           .replace(/'/g, '&#39;');
       }
 
-      // Helper function to turn float values into readable fractions
+      // Fraction Display Engine
       function getFractionString(val) {
         if (typeof val !== 'number' || isNaN(val)) return '';
         if (val <= 0) return '0';
@@ -1306,14 +1335,9 @@
         const whole = Math.floor(val);
         const frac = val - whole;
 
-        if (frac < tolerance) {
-          return whole > 0 ? String(whole) : '';
-        }
-        if (Math.abs(frac - 1) < tolerance) {
-          return String(whole + 1);
-        }
+        if (frac < tolerance) return whole > 0 ? String(whole) : '';
+        if (Math.abs(frac - 1) < tolerance) return String(whole + 1);
 
-        // Common baking & cooking fraction mapping
         const commonFractions = [
           { value: 1/2, display: '1/2' },
           { value: 1/3, display: '1/3' },
@@ -1361,11 +1385,9 @@
           return whole > 0 ? `${whole} ${fracDisplay}` : fracDisplay;
         }
 
-        const formattedFloat = parseFloat(val.toFixed(2));
-        return String(formattedFloat);
+        return String(parseFloat(val.toFixed(2)));
       }
 
-      // Utility: Format scaled ingredient amounts cleanly into fractions
       function formatScaledAmount(amountStr, multiplier) {
         if (!amountStr) return '';
         const trimmed = String(amountStr).trim();
@@ -1390,9 +1412,7 @@
         return getFractionString(scaled);
       }
 
-      // =========================================================================
-      // SMART RECIPE PARSER (Vanilla JS Offline Importer)
-      // =========================================================================
+      // Parser Logic
       const UNICODE_FRACTIONS = {
         '½': '1/2', '⅓': '1/3', '⅔': '2/3', '¼': '1/4', '¾': '3/4',
         '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5', '⅙': '1/6',
@@ -1703,9 +1723,7 @@
         }
 
         rawIngredientLines.forEach(line => {
-          if (/^(?:for\s+the\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) {
-            return;
-          }
+          if (/^(?:for\s+the\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
           if (rawStepLines.length === 0 && /^\d+[.)]\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
             rawStepLines.push(line);
             return;
@@ -1718,13 +1736,9 @@
 
         for (let i = 0; i < rawStepLines.length; i++) {
           let line = rawStepLines[i].trim();
-          if (/^step\s*\d+\s*:?$/i.test(line)) {
-            continue;
-          }
-          line = line
-            .replace(/^(?:step\s*\d+\s*[:.\-–—)]\s*|\d+\s*[.)\-–—:]\s*|[•‣⁃▪▫◦*+\-–—]\s*)/i, '')
-            .trim();
+          if (/^step\s*\d+\s*:?$/i.test(line)) continue;
 
+          line = line.replace(/^(?:step\s*\d+\s*[:.\-–—)]\s*|\d+\s*[.)\-–—:]\s*|[•‣⁃▪▫◦*+\-–—]\s*)/i, '').trim();
           if (!line) continue;
 
           let tip = '';
@@ -1739,7 +1753,6 @@
               i++;
             }
           }
-
           result.steps.push({ instruction: line, tip });
         }
 
@@ -1757,16 +1770,12 @@
         return result;
       }
 
-      // =========================================================================
-      // DATABASE CONNECTIONS (Firestore Real-Time Sync)
-      // =========================================================================
+      // Firestore Real-Time Database Connection
       function loadState() {
-        // Real-Time Listener: Automatically triggers UI update on ALL screens when change is detected in DB
         db.collection("recipes").onSnapshot((snapshot) => {
           recipes = [];
           
           if (snapshot.empty) {
-            // Write local defaults up if database is completely fresh and empty
             DEFAULT_RECIPES.forEach(dr => {
               db.collection("recipes").add({ ...dr, updatedAt: Date.now() });
             });
@@ -1787,7 +1796,6 @@
           console.error("Firestore loading error: ", error);
         });
 
-        // Real-Time Title & Dedication Loader
         db.collection("metadata").doc("cookbookSettings").onSnapshot((doc) => {
           if (doc.exists) {
             cookbookMeta = doc.data();
@@ -1796,13 +1804,9 @@
         });
       }
 
-      function saveRecipes() {
-        // Database writes are now integrated directly inside saveRecipeFromEditor()
-      }
-
       function saveMeta() {
         db.collection("metadata").doc("cookbookSettings").set(cookbookMeta)
-          .catch(err => console.error("Error saving customization settings: ", err));
+          .catch(err => console.error("Error saving metadata: ", err));
       }
 
       function renderHeaderMeta() {
@@ -1810,7 +1814,6 @@
         document.getElementById('cookbookHeaderSubtitle').textContent = cookbookMeta.subtitle;
       }
 
-      // Build Filter Chips with Meal Type Progression Order
       function renderFilterSidebar() {
         const existingMealTypes = new Set(recipes.map(r => normalizeMealType(r.mealType || r.timeOfDay)).filter(Boolean));
         const extraMealTypes = Array.from(existingMealTypes).filter(m => !MEAL_TYPES_ORDER.includes(m)).sort();
@@ -1866,7 +1869,6 @@
         });
       }
 
-      // Filter & Sort Recipes
       function getFilteredRecipes() {
         const q = activeFilters.search.trim().toLowerCase();
 
@@ -1929,7 +1931,6 @@
         return filtered;
       }
 
-      // Render Recipe Cards Grid
       function renderRecipeGrid() {
         const grid = document.getElementById('recipeGrid');
         const countEl = document.getElementById('resultsCountText');
@@ -2012,7 +2013,6 @@
         renderAll();
       }
 
-      // Open Detail Modal
       function openRecipeDetail(recipeId) {
         const recipe = recipes.find(r => r.id === recipeId);
         if (!recipe) return;
@@ -2157,7 +2157,6 @@
         });
       }
 
-      // Editor Modal Rows
       function addIngredientEditorRow(data = { amount: '', unit: '', item: '', note: '' }) {
         const container = document.getElementById('ingredientRowsContainer');
         const row = document.createElement('div');
@@ -2405,7 +2404,6 @@
         };
 
         if (existingRecipe) {
-          // Update in Firestore
           db.collection("recipes").doc(existingRecipe.id).set(recipeObj)
             .then(() => {
               document.getElementById('editorModal').classList.remove('open');
@@ -2415,7 +2413,6 @@
               banner.textContent = "Database Error: " + err.message;
             });
         } else {
-          // Save New to Firestore
           db.collection("recipes").add(recipeObj)
             .then(() => {
               document.getElementById('editorModal').classList.remove('open');
@@ -2429,6 +2426,12 @@
 
       // Bind UI Events
       function bindEvents() {
+        // Passcode Submission events
+        document.getElementById('btnSubmitPasscode').addEventListener('click', handlePasscodeSubmit);
+        document.getElementById('familyPasscodeInput').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') handlePasscodeSubmit();
+        });
+
         document.getElementById('searchInput').addEventListener('input', (e) => {
           activeFilters.search = e.target.value;
           renderRecipeGrid();
@@ -2553,10 +2556,20 @@
           }
         });
 
+        // 🔒 Protected Deletion (Requires Admin PIN verification)
         document.getElementById('btnDeleteCurrentRecipe').addEventListener('click', () => {
           const recipe = recipes.find(r => r.id === currentViewingRecipeId);
           if (!recipe) return;
-          if (confirm(`Remove "${recipe.title}" from the family cookbook?`)) {
+
+          const enteredPin = prompt(`ADMIN VERIFICATION REQUIRED:\nEnter Admin PIN to delete "${recipe.title}":`);
+          if (enteredPin === null) return; // User cancelled
+
+          if (enteredPin !== ADMIN_DELETE_PIN) {
+            alert("❌ Unauthorized: Incorrect Admin PIN. Only the cookbook administrator can delete recipes.");
+            return;
+          }
+
+          if (confirm(`Are you completely sure you want to permanently delete "${recipe.title}"?`)) {
             db.collection("recipes").doc(currentViewingRecipeId).delete()
               .then(() => {
                 document.getElementById('detailModal').classList.remove('open');
@@ -2606,6 +2619,7 @@
       }
 
       // Initialize Application
+      checkAccessGate();
       loadState();
       bindEvents();
     })();
