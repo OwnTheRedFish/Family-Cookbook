@@ -1,16 +1,65 @@
+Clemons Family Cookbook: Authentication & Database Setup
+
+Below is the complete guide and ready-to-run code for your family cookbook.
+
+1. Required Firestore Security Rules
+
+To resolve the "Missing or insufficient permissions" error when deleting or editing, your database rules on Firebase must allow authenticated family members to write and delete.
+
+Go to your Firebase Console.
+
+Select your project clemons-family-cookbook.
+
+In the left navigation bar, click Firestore Database, then open the Rules tab at the top.
+
+Replace the existing contents with these rules and click Publish:
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Any logged-in family member can view, add, edit, and delete recipes
+    match /recipes/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Any logged-in family member can view settings; only Kristi can edit book dedication
+    match /metadata/{document} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email.lower() == 'kristimilman@gmail.com';
+    }
+  }
+}
+
+
+2. Complete Application Code (index.html)
+
+Save the following code as your index.html. It includes:
+
+One-click Google Sign-In alongside Email/Password login.
+
+Family Email Whitelist (AUTHORIZED_FAMILY_EMAILS) so only the people you list can access the cookbook.
+
+Full access for any authorized user to add, edit, and delete recipes (no client PIN required).
+
+Admin-only controls for Cookbook Dedication and Restore JSON reserved for kristimilman@gmail.com.
+
+Automatic sign-out button and session management.
+
 <!doctype html>
 <html lang="en">
 <head>
   <script src="devconsole.js"></script>
-  
+
   <!-- Firebase SDK Compatibility Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Clemons Family — Family Cookbook</title>
+
   <style>
     :root {
       /* Modern Farmhouse Chic Color Palette */
@@ -46,6 +95,7 @@
       display: flex;
       flex-direction: column;
     }
+
     /* Access Gate Overlay */
     #accessGateModal {
       position: fixed;
@@ -81,6 +131,55 @@
       font-size: 0.9rem;
       margin-bottom: 1.5rem;
     }
+
+    /* Google Sign-in Button */
+    .btn-google {
+      background-color: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      font-weight: 600;
+      text-transform: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 2px rgba(60,64,67,0.1);
+    }
+    .btn-google:hover {
+      background-color: #f8fafd;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.2);
+    }
+    .google-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1.25rem 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .auth-divider span {
+      padding: 0 0.75rem;
+    }
+
     /* Header & Banner */
     header {
       background-color: var(--bg-card);
@@ -128,6 +227,12 @@
       justify-content: center;
       align-items: center;
     }
+    .user-greeting {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-right: 0.5rem;
+    }
+
     /* Buttons */
     .btn {
       font-family: var(--font-sans);
@@ -193,6 +298,7 @@
       padding: 0.4rem 0.8rem;
       font-size: 0.75rem;
     }
+
     /* Status Banners */
     .status-banner {
       display: none;
@@ -214,6 +320,7 @@
       color: #2d5a3c;
       border: 1px solid #bcf0da;
     }
+
     /* Quick Paste & Parse Importer Box */
     .import-box {
       background-color: #f7f3eb;
@@ -261,6 +368,7 @@
       margin-top: 0.75rem;
       flex-wrap: wrap;
     }
+
     /* Layout */
     .app-container {
       max-width: 1400px;
@@ -272,6 +380,7 @@
       padding: 2.5rem 2rem;
       flex: 1;
     }
+
     /* Sidebar Filters */
     .sidebar {
       background-color: var(--bg-sidebar);
@@ -349,6 +458,7 @@
       border-color: var(--brand-primary);
       font-weight: 600;
     }
+
     /* Main Content Area */
     .main-area {
       min-width: 0;
@@ -375,6 +485,7 @@
       font-size: 0.85rem;
       color: var(--text-muted);
     }
+
     /* Recipe Grid */
     .recipe-grid {
       display: grid;
@@ -477,6 +588,7 @@
     .favorite-btn:hover {
       transform: scale(1.15);
     }
+
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -495,6 +607,7 @@
       color: var(--text-muted);
       margin-bottom: 1.5rem;
     }
+
     /* Modals / Overlays */
     .modal-backdrop {
       position: fixed;
@@ -546,6 +659,7 @@
       justify-content: flex-end;
       gap: 1rem;
     }
+
     /* Recipe Detail View inside Modal */
     .detail-header {
       border-bottom: 1px solid var(--border-color);
@@ -697,7 +811,7 @@
     }
     .family-notes-box {
       margin-top: 2rem;
-      background-color: #f4f6f3; /* Very soft sage block */
+      background-color: #f4f6f3;
       border: 1px solid #dbe2de;
       border-radius: var(--radius-sm);
       padding: 1.25rem 1.5rem;
@@ -709,6 +823,7 @@
       font-size: 1.1rem;
       font-weight: normal;
     }
+
     /* Form Grid inside Editor Modal */
     .form-grid {
       display: grid;
@@ -747,6 +862,7 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
     }
+
     /* Responsive adjustments */
     @media (max-width: 920px) {
       .app-container {
@@ -763,6 +879,7 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+
     /* Print Styles */
     @media print {
       header, .sidebar, .toolbar, .modal-footer, .scale-buttons, .header-actions {
@@ -787,17 +904,36 @@
   </style>
 </head>
 <body>
+
   <!-- Family Access Authentication Panel -->
   <div id="accessGateModal">
     <div class="gate-card">
       <h2>👪 Family Kitchen</h2>
-      <p>Log in with your authorized family email address to open the cookbook.</p>
-      <div id="gateErrorBanner" class="status-banner" style="margin-bottom: 1rem;"></div>
-      <input type="email" id="familyEmailInput" class="text-input" placeholder="Family email address..." style="text-align: center; margin-bottom: 0.75rem;">
-      <input type="password" id="familyPasswordInput" class="text-input" placeholder="Enter password..." style="text-align: center; margin-bottom: 1rem;">
-      <button type="button" class="btn btn-primary" id="btnSubmitPasscode" style="width: 100%; justify-content: center;">Enter Cookbook</button>
+      <p>Sign in with your authorized family account to open the cookbook.</p>
+      <div id="gateErrorBanner" class="status-banner"></div>
+
+      <!-- Option 1: Fast One-Click Google Sign-In -->
+      <button type="button" class="btn-google" id="btnGoogleSignIn">
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.62-.62-1.07-1.37-1.42-2.18z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        Sign in with Google
+      </button>
+
+      <div class="auth-divider"><span>or sign in with email</span></div>
+
+      <!-- Option 2: Email & Password Sign-In -->
+      <form id="emailLoginForm" onsubmit="return false;">
+        <input type="email" id="familyEmailInput" class="text-input" placeholder="Email address..." style="text-align: center; margin-bottom: 0.75rem;" autocomplete="username">
+        <input type="password" id="familyPasswordInput" class="text-input" placeholder="Password..." style="text-align: center; margin-bottom: 1rem;" autocomplete="current-password">
+        <button type="button" class="btn btn-primary" id="btnSubmitEmailAuth" style="width: 100%; justify-content: center;">Sign In</button>
+      </form>
     </div>
   </div>
+
   <header>
     <div class="header-inner">
       <div class="brand-title">
@@ -805,6 +941,7 @@
         <div class="brand-subtitle" id="cookbookHeaderSubtitle">Kitchen memories, family recipes &amp; daily gatherings</div>
       </div>
       <div class="header-actions">
+        <span class="user-greeting" id="userGreetingText"></span>
         <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Family Recipe</button>
         <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">📋 Paste &amp; Import Recipe</button>
         <button type="button" class="btn btn-outline" id="btnCustomizeBook">✒️ Cookbook Dedication</button>
@@ -815,6 +952,7 @@
       </div>
     </div>
   </header>
+
   <div class="app-container">
     <!-- Multi-Filter Sidebar -->
     <aside class="sidebar">
@@ -859,6 +997,7 @@
         </div>
       </div>
     </aside>
+
     <!-- Main Recipe Listing -->
     <main class="main-area">
       <div class="toolbar">
@@ -877,6 +1016,7 @@
       <div id="recipeGrid" class="recipe-grid"></div>
     </main>
   </div>
+
   <!-- MODAL 1: Recipe Detail & Interactive Cooking View -->
   <div class="modal-backdrop" id="detailModal">
     <div class="modal-panel">
@@ -892,6 +1032,7 @@
       <div class="modal-body" id="detailModalBody"></div>
     </div>
   </div>
+
   <!-- MODAL 2: Add / Edit Recipe -->
   <div class="modal-backdrop" id="editorModal">
     <div class="modal-panel">
@@ -920,13 +1061,13 @@
         </div>
         <div class="form-grid">
           <div class="form-group" style="grid-column: span 2;">
-            <label for="editTitle">Recipe Name \*</label>
+            <label for="editTitle">Recipe Name *</label>
             <input type="text" id="editTitle" class="text-input" placeholder="e.g., Cast-Iron Skillet Buttermilk Cornbread">
           </div>
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label for="editMealType">Meal Type \*</label>
+            <label for="editMealType">Meal Type *</label>
             <select id="editMealType" class="select-input">
               <option value="Breakfast">Breakfast</option>
               <option value="Brunch">Brunch</option>
@@ -1023,6 +1164,7 @@
       </div>
     </div>
   </div>
+
   <!-- MODAL 3: Customize Cookbook Title & Dedication -->
   <div class="modal-backdrop" id="dedicationModal">
     <div class="modal-panel" style="max-width: 600px;">
@@ -1045,16 +1187,26 @@
       </div>
     </div>
   </div>
+
   <script>
     (function () {
       'use strict';
+
       // =========================================================================
-      // 🔒 SECURITY KEYS & PASSWORDS
-      // Admin user email address is used to grant administrative privileges.
+      // 🔒 AUTHENTICATION & ACCESS CONTROL
       // =========================================================================
       const ADMIN_EMAIL = "kristimilman@gmail.com";
 
-      // Firebase Config containing your live credentials
+      // 👪 AUTHORIZED FAMILY MEMBERS LIST
+      // Add each family member's email address here to allow them in.
+      // (If this list is left completely empty [], ANY person with an account can log in).
+      const AUTHORIZED_FAMILY_EMAILS = [
+        "kristimilman@gmail.com"
+        // Add your family members' emails below:
+        // "example.family@gmail.com",
+      ];
+
+      // Firebase Config
       const firebaseConfig = {
         apiKey: "AIzaSyCBwJnB3TmTGvqnbt_WdYvzo2aUKp_7rhk",
         authDomain: "clemons-family-cookbook.firebaseapp.com",
@@ -1064,6 +1216,7 @@
         appId: "1:232806060471:web:d320e16c5cafe10d2b1832",
         measurementId: "G-9LSTPRDZXJ"
       };
+
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
       const auth = firebase.auth();
@@ -1095,7 +1248,7 @@
         return legacyMap[val] || val;
       }
 
-      // Starter Templates (loaded only if Firestore database collections are empty)
+      // Starter Templates
       const DEFAULT_RECIPES = [
         {
           title: 'Cast-Iron Buttermilk & Cardamom Pancakes',
@@ -1158,52 +1311,95 @@
       let currentEditingRecipeId = null;
       let currentScaleMultiplier = 1;
 
-      // Access Gate Listener (Handles User Auth & UI Protection)
+      // =========================================================================
+      // 🔒 AUTHENTICATION LISTENERS & CONTROLS
+      // =========================================================================
       auth.onAuthStateChanged((user) => {
+        const gate = document.getElementById('accessGateModal');
+        const errBanner = document.getElementById('gateErrorBanner');
+
         if (user) {
-          document.getElementById('accessGateModal').classList.add('unlocked');
+          const userEmail = (user.email || '').toLowerCase();
           
-          // Any authorized logged-in family user can Add, Edit, or Delete recipes
+          // Whitelist Verification check (if populated)
+          if (AUTHORIZED_FAMILY_EMAILS.length > 0) {
+            const isAuthorized = AUTHORIZED_FAMILY_EMAILS.some(e => e.toLowerCase() === userEmail);
+            if (!isAuthorized) {
+              errBanner.className = 'status-banner error';
+              errBanner.textContent = `Access Denied: ${user.email} is not listed on the Clemons family roster.`;
+              auth.signOut();
+              return;
+            }
+          }
+
+          // User is authorized! Unlock cookbook
+          gate.classList.add('unlocked');
+          errBanner.className = 'status-banner';
+          errBanner.textContent = '';
+
+          // Display user email / name in header
+          const greetingEl = document.getElementById('userGreetingText');
+          if (greetingEl) {
+            greetingEl.textContent = `👋 ${user.displayName || user.email}`;
+          }
+
+          // Any authorized family member can add, edit, or delete recipes
           document.getElementById('btnNewRecipe').style.display = 'inline-flex';
           document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
-          document.getElementById('btnEditCurrentRecipe').style.display = 'inline-flex';
-          document.getElementById('btnDeleteCurrentRecipe').style.display = 'inline-flex';
-          
-          // Administrative Only tools protected for kristimilman@gmail.com
-          if (user.email === ADMIN_EMAIL) {
+          document.getElementById('btnExportBook').style.display = 'inline-flex';
+
+          // Dedication and JSON restore reserved for kristimilman@gmail.com
+          if (userEmail === ADMIN_EMAIL.toLowerCase()) {
             document.getElementById('btnCustomizeBook').style.display = 'inline-flex';
             document.getElementById('btnTriggerRestore').style.display = 'inline-flex';
           } else {
             document.getElementById('btnCustomizeBook').style.display = 'none';
             document.getElementById('btnTriggerRestore').style.display = 'none';
           }
-          
+
           loadState();
         } else {
-          document.getElementById('accessGateModal').classList.remove('unlocked');
+          // Logged out
+          gate.classList.remove('unlocked');
+          document.getElementById('userGreetingText').textContent = '';
         }
       });
 
-      function handlePasscodeSubmit() {
-        const emailInput = document.getElementById('familyEmailInput').value.trim();
-        const passwordInput = document.getElementById('familyPasswordInput').value.trim();
+      // Google Sign-In Trigger
+      function handleGoogleSignIn() {
+        const errBanner = document.getElementById('gateErrorBanner');
+        errBanner.className = 'status-banner';
+        errBanner.textContent = '';
+
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch((error) => {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = error.message;
+        });
+      }
+
+      // Email & Password Sign-In Trigger
+      function handleEmailAuth() {
+        const email = document.getElementById('familyEmailInput').value.trim();
+        const password = document.getElementById('familyPasswordInput').value.trim();
         const errBanner = document.getElementById('gateErrorBanner');
 
-        if (!emailInput || !passwordInput) {
+        if (!email || !password) {
           errBanner.className = 'status-banner error';
-          errBanner.textContent = 'Please enter both your family email address and password.';
+          errBanner.textContent = 'Please enter both email and password.';
           return;
         }
 
-        auth.signInWithEmailAndPassword(emailInput, passwordInput)
-          .catch((error) => {
-            errBanner.className = 'status-banner error';
-            errBanner.textContent = 'Verification failed: ' + error.message;
-          });
+        auth.signInWithEmailAndPassword(email, password).catch((error) => {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = error.message;
+        });
       }
 
       function handleSignOut() {
-        auth.signOut();
+        if (confirm("Sign out of the Clemons Family Cookbook?")) {
+          auth.signOut();
+        }
       }
 
       function escapeHtml(str) {
@@ -1245,7 +1441,7 @@
         ];
         for (const f of commonFractions) {
           if (Math.abs(frac - f.value) < tolerance) {
-            return whole > 0 ? \`${whole} ${f.display}\` : f.display;
+            return whole > 0 ? `${whole} ${f.display}` : f.display;
           }
         }
         let bestDenominator = 1;
@@ -1265,8 +1461,8 @@
           const divisor = gcd(bestNumerator, bestDenominator);
           const simplifiedNumerator = bestNumerator / divisor;
           const simplifiedDenominator = bestDenominator / divisor;
-          const fracDisplay = \`${simplifiedNumerator}/${simplifiedDenominator}\`;
-          return whole > 0 ? \`${whole} ${fracDisplay}\` : fracDisplay;
+          const fracDisplay = `${simplifiedNumerator}/${simplifiedDenominator}`;
+          return whole > 0 ? `${whole} ${fracDisplay}` : fracDisplay;
         }
         return String(parseFloat(val.toFixed(2)));
       }
@@ -1274,18 +1470,18 @@
       function formatScaledAmount(amountStr, multiplier) {
         if (!amountStr) return '';
         const trimmed = String(amountStr).trim();
-        const mixedMatch = trimmed.match(/^(\\d+)\\s+(\\d+)\\s\*\\/\\s\*(\\d+)$/);
-        const fractionMatch = trimmed.match(/^(\\d+)\\s\*\\/\\s\*(\\d+)$/);
+        const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+        const fractionMatch = trimmed.match(/^(\d+)\s*\/\s*(\d+)$/);
         let numVal = NaN;
         if (mixedMatch) {
           numVal = parseFloat(mixedMatch[1]) + (parseFloat(mixedMatch[2]) / parseFloat(mixedMatch[3]));
         } else if (fractionMatch) {
           numVal = parseFloat(fractionMatch[1]) / parseFloat(fractionMatch[2]);
-        } else if (/^\\d+(\\.\\d+)?$/.test(trimmed)) {
+        } else if (/^\d+(\.\d+)?$/.test(trimmed)) {
           numVal = parseFloat(trimmed);
         }
         if (isNaN(numVal)) {
-          return multiplier === 1 ? trimmed : \`${trimmed} (×${multiplier})\`;
+          return multiplier === 1 ? trimmed : `${trimmed} (×${multiplier})`;
         }
         const scaled = numVal * multiplier;
         return getFractionString(scaled);
@@ -1324,7 +1520,7 @@
       function normalizeUnicodeFractions(text) {
         let out = text;
         for (const [uni, ascii] of Object.entries(UNICODE_FRACTIONS)) {
-          out = out.replace(new RegExp(\`(\\\\d)${uni}\`, 'g'), \`$1 ${ascii}\`);
+          out = out.replace(new RegExp(`(\\\\d)${uni}`, 'g'), `$1 ${ascii}`);
           out = out.replace(new RegExp(uni, 'g'), ascii);
         }
         return out;
@@ -1334,8 +1530,8 @@
         if (!text) return null;
         let total = 0;
         let matched = false;
-        const hrMatch = text.match(/(\\d+(?:\\.\\d+)?)\\s\*(?:hours?|hrs?|hr|h)\\b/);
-        const minMatch = text.match(/(\\d+)\\s\*(?:minutes?|mins?|min|m)\\b/);
+        const hrMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)\b/i);
+        const minMatch = text.match(/(\d+)\s*(?:minutes?|mins?|min|m)\b/i);
         if (hrMatch) {
           total += Math.round(parseFloat(hrMatch[1]) * 60);
           matched = true;
@@ -1345,7 +1541,7 @@
           matched = true;
         }
         if (!matched) {
-          const bareNum = text.match(/\\b(\\d+)\\b/);
+          const bareNum = text.match(/\b(\d+)\b/);
           if (bareNum) return parseInt(bareNum[1], 10);
         }
         return matched ? total : null;
@@ -1353,39 +1549,39 @@
 
       function parseSingleIngredientLine(rawLine) {
         let line = normalizeUnicodeFractions(rawLine)
-          .replace(/^[\\s•‣⁃▪▫◦\*+\\-–—☐☑✓✔✗✘[\\]()]+/, '')
+          .replace(/^[\s•‣⁃▪▫◦\*+\-–—☐☑✓✔✗✘\[\]()]+/, '')
           .trim();
         if (!line) return null;
         let amount = '';
         let unit = '';
         let item = '';
         let note = '';
-        const trailingParenMatch = line.match(/\\s\*\\(([^)]+)\\)\\s\*$/);
-        if (trailingParenMatch && !/^\\d+\\s\*(oz|g|ml|lb)/i.test(trailingParenMatch[1])) {
+        const trailingParenMatch = line.match(/\s*\(([^)]+)\)\s*$/);
+        if (trailingParenMatch && !/^\d+\s*(oz|g|ml|lb)/i.test(trailingParenMatch[1])) {
           note = trailingParenMatch[1].trim();
           line = line.slice(0, trailingParenMatch.index).trim();
         }
-        const qtyRegex = /^(\\d+\\s+\\d+\\s\*\\/\\s\*\\d+|\\d+\\s\*\\/\\s\*\\d+|\\d+(?:\\.\\d+)?(?:\\s\*(?:-|–|to)\\s\*\\d+(?:\\.\\d+)?)?)\\s\*(.\*)$/i;
+        const qtyRegex = /^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+(?:\.\d+)?(?:\s*(?:-|–|to)\s*\d+(?:\.\d+)?)?)\s*(.*)$/i;
         const qtyMatch = line.match(qtyRegex);
         let remainder = line;
         if (qtyMatch) {
-          amount = qtyMatch[1].replace(/\\s+/g, ' ').trim();
+          amount = qtyMatch[1].replace(/\s+/g, ' ').trim();
           remainder = qtyMatch[2].trim();
-        } else if (/^(a|an)\\s+/i.test(line)) {
-          const wordMatch = line.match(/^(a|an)\\s+(pinch|dash|handful|bunch|clove|sprig|slice|can|jar|package|head|piece)\\b\\s\*(.\*)$/i);
+        } else if (/^(a|an)\s+/i.test(line)) {
+          const wordMatch = line.match(/^(a|an)\s+(pinch|dash|handful|bunch|clove|sprig|slice|can|jar|package|head|piece)\b\s*(.*)$/i);
           if (wordMatch) {
             amount = '1';
             unit = wordMatch[2].toLowerCase();
-            remainder = wordMatch[3].replace(/^of\\s+/i, '').trim();
+            remainder = wordMatch[3].replace(/^of\s+/i, '').trim();
           }
         }
         if (!unit && remainder) {
-          const parenCanMatch = remainder.match(/^(\\(\\d+[^)]\*\\)\\s\*(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)|(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)\\s\*\\(\\d+[^)]\*\\))\\s+(.\*)$/i);
+          const parenCanMatch = remainder.match(/^(\(\d+[^)]*\)\s*(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)|(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)\s*\(\d+[^)]*\))\s+(.*)$/i);
           if (parenCanMatch) {
             unit = parenCanMatch[1].trim();
             remainder = parenCanMatch[2].trim();
           } else {
-            const tokens = remainder.split(/\\s+/);
+            const tokens = remainder.split(/\s+/);
             const firstTwo = tokens.slice(0, 2).join(' ').toLowerCase().replace(/[.,]$/, '');
             const firstOne = tokens[0].toLowerCase().replace(/[.,]$/, '');
             if (KNOWN_UNITS.has(firstTwo)) {
@@ -1396,20 +1592,20 @@
               remainder = tokens.slice(1).join(' ').trim();
             }
           }
-          remainder = remainder.replace(/^of\\s+/i, '').trim();
+          remainder = remainder.replace(/^of\s+/i, '').trim();
         } else if (!amount && remainder) {
-          const stuckMatch = remainder.match(/^(\\d+(?:\\.\\d+)?)(g|kg|mg|ml|l|oz|lb|lbs|tbsp|tsp|c)\\b\\.?\\s+(.\*)$/i);
+          const stuckMatch = remainder.match(/^(\d+(?:\.\d+)?)(g|kg|mg|ml|l|oz|lb|lbs|tbsp|tsp|c)\b\.?\s+(.*)$/i);
           if (stuckMatch) {
             amount = stuckMatch[1];
             unit = stuckMatch[2];
-            remainder = stuckMatch[3].replace(/^of\\s+/i, '').trim();
+            remainder = stuckMatch[3].replace(/^of\s+/i, '').trim();
           }
         }
         const commaIdx = remainder.indexOf(',');
         if (commaIdx !== -1) {
           item = remainder.slice(0, commaIdx).trim();
           const commaNote = remainder.slice(commaIdx + 1).trim();
-          note = note ? \`${commaNote}; ${note}\` : commaNote;
+          note = note ? `${commaNote}; ${note}` : commaNote;
         } else {
           item = remainder.trim();
         }
@@ -1427,13 +1623,13 @@
 
       function looksLikeIngredientLine(line) {
         const norm = normalizeUnicodeFractions(line)
-          .replace(/^[\\s•‣⁃▪▫◦\*+\\-–—☐☑✓✔]+/, '')
+          .replace(/^[\s•‣⁃▪▫◦\*+\-–—☐☑✓✔]+/, '')
           .trim();
         if (!norm || norm.length > 130) return false;
-        if (/^(\\d+\\s+\\d+\\/\\d+|\\d+\\/\\d+|\\d+(?:\\.\\d+)?)\\s\*([a-zA-Z]+|\\(\\d+)/.test(norm)) {
-          if (/^\\d+[.)]\\s+[A-Z]/.test(line.trim())) {
-            const afterNum = line.trim().replace(/^\\d+[.)]\\s+/, '');
-            const firstWord = afterNum.split(/\\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+        if (/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*([a-zA-Z]+|\(\d+)/.test(norm)) {
+          if (/^\d+[.)]\s+[A-Z]/.test(line.trim())) {
+            const afterNum = line.trim().replace(/^\d+[.)]\s+/, '');
+            const firstWord = afterNum.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
             const cookingVerbs = new Set([
               'preheat', 'heat', 'melt', 'whisk', 'mix', 'stir', 'combine', 'add', 'pour',
               'bake', 'cook', 'roast', 'fry', 'saute', 'sauté', 'simmer', 'boil', 'bring',
@@ -1449,7 +1645,7 @@
           }
           return true;
         }
-        if (/^(a\\s+pinch|a\\s+dash|a\\s+handful|salt\\s+and\\s+pepper|kosher\\s+salt|sea\\s+salt|freshly\\s+ground|to\\s+taste|cooking\\s+spray|olive\\s+oil)/i.test(norm)) {
+        if (/^(a\s+pinch|a\s+dash|a\s+handful|salt\s+and\s+pepper|kosher\s+salt|sea\s+salt|freshly\s+ground|to\s+taste|cooking\s+spray|olive\s+oil)/i.test(norm)) {
           return true;
         }
         return false;
@@ -1468,19 +1664,19 @@
         };
         if (!rawText || !rawText.trim()) return result;
         const rawLines = rawText
-          .replace(/\\r\\n/g, '\\n')
-          .split('\\n')
+          .replace(/\r\n/g, '\n')
+          .split('\n')
           .map(l => l.trim())
           .filter(Boolean);
         for (const l of rawLines) {
-          const urlMatch = l.match(/https?:\\/\\/[^\\s)]+/);
+          const urlMatch = l.match(/https?:\/\/[^\s)]+/i);
           if (urlMatch && !result.sourceUrl) {
             result.sourceUrl = urlMatch[0];
           }
         }
-        const sectionHeaderIngredients = /^(?:ingredients?|what\\s+you(?:'ll)?\\s+need|for\\s+the\\s+ingredients?|shopping\\s+list)\\s\*:?\\s\*$/i;
-        const sectionHeaderSteps = /^(?:instructions?|directions?|steps?|method|preparation|how\\s+to\\s+make(?:\\s+it)?|cooking\\s+instructions?)\\s\*:?\\s\*$/i;
-        const sectionHeaderNotes = /^(?:notes?|tips?|recipe\\s+notes?|chef'?s?\\s+notes?|cook'?s?\\s+notes?|storage|nutrition(?:al)?\\s\*(?:info|information|facts)?)\\s\*:?\\s\*$/i;
+        const sectionHeaderIngredients = /^(?:ingredients?|what\s+you(?:'ll)?\s+need|for\s+the\s+ingredients?|shopping\s+list)\s*:?\s*$/i;
+        const sectionHeaderSteps = /^(?:instructions?|directions?|steps?|method|preparation|how\s+to\s+make(?:\s+it)?|cooking\s+instructions?)\s*:?\s*$/i;
+        const sectionHeaderNotes = /^(?:notes?|tips?|recipe\s+notes?|chef'?s?\s+notes?|cook'?s?\s+notes?|storage|nutrition(?:al)?\s*(?:info|information|facts)?)\s*:?\s*$/i;
         let currentSection = 'HEADER'; 
         const headerLines = [];
         const rawIngredientLines = [];
@@ -1488,10 +1684,10 @@
         const rawNoteLines = [];
         for (let i = 0; i < rawLines.length; i++) {
           const line = rawLines[i];
-          const prepMatch = line.match(/prep(?:\\s\*time)?\\s\*:\\s\*([^|•,\\n]+)/i);
-          const cookMatch = line.match(/cook(?:\\s\*time)?\\s\*:\\s\*([^|•,\\n]+)/i);
-          const servMatch = line.match(/(?:servings?|serves|yield|makes)\\s\*:\\s\*(\\d+)/i) ||
-                            line.match(/^(?:serves|makes)\\s+(\\d+)\\b/i);
+          const prepMatch = line.match(/prep(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
+          const cookMatch = line.match(/cook(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
+          const servMatch = line.match(/(?:servings?|serves|yield|makes)\s*:\s*(\d+)/i) ||
+                            line.match(/^(?:serves|makes)\s+(\d+)\b/i);
           let isMetaLine = false;
           if (prepMatch) {
             const m = parseDurationToMinutes(prepMatch[1]);
@@ -1505,19 +1701,19 @@
             result.servings = parseInt(servMatch[1], 10);
             isMetaLine = true;
           }
-          if (/^prep(?:\\s\*time)?\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
+          if (/^prep(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
             const m = parseDurationToMinutes(rawLines[i + 1]);
             if (m !== null) { result.prepMins = m; i++; continue; }
           }
-          if (/^cook(?:\\s\*time)?\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
+          if (/^cook(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
             const m = parseDurationToMinutes(rawLines[i + 1]);
             if (m !== null) { result.cookMins = m; i++; continue; }
           }
-          if (/^(?:servings?|yield)\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
-            const sMatch = rawLines[i + 1].match(/(\\d+)/);
+          if (/^(?:servings?|yield)\s*:?$/i.test(line) && i + 1 < rawLines.length) {
+            const sMatch = rawLines[i + 1].match(/(\d+)/);
             if (sMatch) { result.servings = parseInt(sMatch[1], 10); i++; continue; }
           }
-          if (/^(?:total\\s\*time|course|cuisine|keyword|author|calories)\\s\*:/i.test(line)) {
+          if (/^(?:total\s*time|course|cuisine|keyword|author|calories)\s*:/i.test(line)) {
             isMetaLine = true;
           }
           if (sectionHeaderIngredients.test(line)) {
@@ -1533,8 +1729,8 @@
             continue;
           }
           if (isMetaLine) continue;
-          if (/^https?:\\/\\/\\S+$/i.test(line)) continue;
-          if (/^(?:print\\s+recipe|pin\\s+recipe|jump\\s+to\\s+recipe|save\\s+recipe|rate\\s+this\\s+recipe|★★★★★|☆☆☆☆☆)$/i.test(line)) {
+          if (/^https?:\/\/\S+$/i.test(line)) continue;
+          if (/^(?:print\s+recipe|pin\s+recipe|jump\s+to\s+recipe|save\s+recipe|rate\s+this\s+recipe|★★★★★|☆☆☆☆☆)$/i.test(line)) {
             continue;
           }
           if (currentSection === 'INGREDIENTS') {
@@ -1551,7 +1747,7 @@
           let passedIngredients = false;
           headerLines.forEach((line, idx) => {
             if (idx === 0 && !looksLikeIngredientLine(line) && line.length < 90) {
-              result.title = line.replace(/^#+\\s\*/, '').trim();
+              result.title = line.replace(/^#+\s*/, '').trim();
               return;
             }
             if (!passedIngredients && looksLikeIngredientLine(line)) {
@@ -1567,15 +1763,15 @@
           });
         } else {
           if (headerLines.length > 0) {
-            result.title = headerLines[0].replace(/^#+\\s\*/, '').trim();
+            result.title = headerLines[0].replace(/^#+\s*/, '').trim();
             if (headerLines.length > 1) {
               result.story = headerLines.slice(1).join(' ').trim();
             }
           }
         }
         rawIngredientLines.forEach(line => {
-          if (/^(?:for\\s+the\\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
-          if (rawStepLines.length === 0 && /^\\d+[.)]\\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
+          if (/^(?:for\s+the\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
+          if (rawStepLines.length === 0 && /^\d+[.)]\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
             rawStepLines.push(line);
             return;
           }
@@ -1586,16 +1782,16 @@
         });
         for (let i = 0; i < rawStepLines.length; i++) {
           let line = rawStepLines[i].trim();
-          if (/^step\\s\*\\d+\\s\*:?$/i.test(line)) continue;
-          line = line.replace(/^(?:step\\s\*\\d+\\s\*[:.\\-–—)]\\s\*|\\d+\\s\*[.)\\-–—:]\\s\*|[•‣⁃▪▫◦\*+\\-–—]\\s\*)/i, '').trim();
+          if (/^step\s*\d+\s*:?$/i.test(line)) continue;
+          line = line.replace(/^(?:step\s*\d+\s*[:.\-–—)]\s*|\d+\s*[.)\-–—:]\s*|[•‣⁃▪▫◦\*+\-–—]\s*)/i, '').trim();
           if (!line) continue;
           let tip = '';
-          const inlineTipMatch = line.match(/\\s\*(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i);
+          const inlineTipMatch = line.match(/\s*(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
           if (inlineTipMatch && inlineTipMatch.index > 10) {
             tip = inlineTipMatch[1].trim();
             line = line.slice(0, inlineTipMatch.index).trim();
-          } else if (i + 1 < rawStepLines.length && /^(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i.test(rawStepLines[i + 1])) {
-            const nextTipMatch = rawStepLines[i + 1].match(/^(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i);
+          } else if (i + 1 < rawStepLines.length && /^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i.test(rawStepLines[i + 1])) {
+            const nextTipMatch = rawStepLines[i + 1].match(/^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
             if (nextTipMatch) {
               tip = nextTipMatch[1].trim();
               i++;
@@ -1605,7 +1801,7 @@
         }
         if (rawNoteLines.length > 0 && result.steps.length > 0) {
           const combinedNotes = rawNoteLines
-            .map(n => n.replace(/^[•\*-]\\s\*/, '').trim())
+            .map(n => n.replace(/^[•\*-]\s*/, '').trim())
             .filter(Boolean)
             .join(' ');
           const lastStep = result.steps[result.steps.length - 1];
@@ -1766,18 +1962,18 @@
         const grid = document.getElementById('recipeGrid');
         const countEl = document.getElementById('resultsCountText');
         const list = getFilteredRecipes();
-        countEl.textContent = \`Showing ${list.length} of ${recipes.length} family recipe${recipes.length === 1 ? '' : 's'}\`;
+        countEl.textContent = `Showing ${list.length} of ${recipes.length} family recipe${recipes.length === 1 ? '' : 's'}`;
         grid.innerHTML = '';
 
         if (list.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty-state';
           empty.style.gridColumn = '1 / -1';
-          empty.innerHTML = \`
+          empty.innerHTML = `
             <h3>No recipes match your current filters</h3>
             <p>Try clearing your filters or creating a new family classic recipe.</p>
             <button type="button" class="btn btn-primary" id="btnEmptyReset">Reset All Filters</button>
-          \`;
+          `;
           grid.appendChild(empty);
           const resetBtn = document.getElementById('btnEmptyReset');
           if (resetBtn) {
@@ -1791,7 +1987,7 @@
           card.className = 'recipe-card';
           const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
           const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
-          card.innerHTML = \`
+          card.innerHTML = `
             <div class="card-banner"></div>
             <div class="card-body">
               <div class="card-badges">
@@ -1808,7 +2004,7 @@
                 </button>
               </div>
             </div>
-          \`;
+          `;
           const favBtn = card.querySelector('.favorite-btn');
           favBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1854,29 +2050,29 @@
         const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
         const scaledServings = Math.max(1, Math.round((Number(recipe.servings) || 4) * currentScaleMultiplier));
         const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
-        const tagsHtml = (recipe.tags || []).map(t => \`<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>\`).join(' ');
+        const tagsHtml = (recipe.tags || []).map(t => `<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>`).join(' ');
         let storyHtml = '';
         if (recipe.story && recipe.story.trim()) {
-          storyHtml = \`<div class="detail-story">“${escapeHtml(recipe.story)}”</div>\`;
+          storyHtml = `<div class="detail-story">“${escapeHtml(recipe.story)}”</div>`;
         }
         let adjustmentsHtml = '';
         if (recipe.myAdjustments && recipe.myAdjustments.trim()) {
-          adjustmentsHtml = \`
+          adjustmentsHtml = `
             <div class="family-notes-box">
               <h4>👩‍🍳 How I Actually Cook It (Family Modifications)</h4>
               <p>${escapeHtml(recipe.myAdjustments)}</p>
-              ${recipe.sourceUrl ? \`<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>\` : ''}
+              ${recipe.sourceUrl ? `<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>` : ''}
             </div>
-          \`;
+          `;
         } else if (recipe.sourceUrl) {
-          adjustmentsHtml = \`
+          adjustmentsHtml = `
             <div class="family-notes-box">
               <h4>🔗 Reference Link</h4>
               <p style="font-size:0.85rem;"><a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>
             </div>
-          \`;
+          `;
         }
-        body.innerHTML = \`
+        body.innerHTML = `
           <div class="detail-header">
             <div class="card-badges" style="margin-bottom:0.5rem;">
               <span class="badge badge-meal">${escapeHtml(currentMeal)}</span>
@@ -1926,7 +2122,7 @@
             </div>
           </div>
           ${adjustmentsHtml}
-        \`;
+        `;
         body.querySelectorAll('.scale-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             currentScaleMultiplier = parseFloat(btn.getAttribute('data-scale')) || 1;
@@ -1938,11 +2134,11 @@
           const li = document.createElement('li');
           li.className = 'ingredient-item';
           const scaledAmt = formatScaledAmount(ing.amount, currentScaleMultiplier);
-          const notePart = ing.note ? \` <em style="color:var(--text-muted);">(${escapeHtml(ing.note)})</em>\` : '';
-          li.innerHTML = \`
+          const notePart = ing.note ? ` <em style="color:var(--text-muted);">(${escapeHtml(ing.note)})</em>` : '';
+          li.innerHTML = `
             <input type="checkbox">
             <span><strong>${escapeHtml(scaledAmt)} ${escapeHtml(ing.unit || '')}</strong> ${escapeHtml(ing.item || '')}${notePart}</span>
-          \`;
+          `;
           const checkbox = li.querySelector('input[type="checkbox"]');
           checkbox.addEventListener('change', () => {
             li.classList.toggle('checked', checkbox.checked);
@@ -1954,15 +2150,15 @@
           const li = document.createElement('li');
           li.className = 'step-item';
           const tipHtml = st.tip && st.tip.trim()
-            ? \`<div class="step-tip">💡 <strong>Parent / Kitchen Tip:</strong> ${escapeHtml(st.tip)}</div>\`
+            ? `<div class="step-tip">💡 <strong>Parent / Kitchen Tip:</strong> ${escapeHtml(st.tip)}</div>`
             : '';
-          li.innerHTML = \`
+          li.innerHTML = `
             <div class="step-number" title="Mark step done">${idx + 1}</div>
             <div class="step-content">
               <div class="step-text">${escapeHtml(st.instruction)}</div>
               ${tipHtml}
             </div>
-          \`;
+          `;
           li.addEventListener('click', () => {
             li.classList.toggle('completed');
           });
@@ -1974,13 +2170,13 @@
         const container = document.getElementById('ingredientRowsContainer');
         const row = document.createElement('div');
         row.className = 'dynamic-row';
-        row.innerHTML = \`
+        row.innerHTML = `
           <input type="text" class="text-input ing-amount" placeholder="Qty (1 1/2)" value="${escapeHtml(data.amount)}">
           <input type="text" class="text-input ing-unit" placeholder="Unit (cup)" value="${escapeHtml(data.unit)}">
-          <input type="text" class="text-input ing-item" placeholder="Ingredient name \*" value="${escapeHtml(data.item)}">
+          <input type="text" class="text-input ing-item" placeholder="Ingredient name *" value="${escapeHtml(data.item)}">
           <input type="text" class="text-input ing-note" placeholder="Prep note (diced)" value="${escapeHtml(data.note)}">
           <button type="button" class="btn btn-light btn-sm btn-remove-row" title="Remove Ingredient">✕</button>
-        \`;
+        `;
         row.querySelector('.btn-remove-row').addEventListener('click', () => {
           row.remove();
         });
@@ -1992,14 +2188,14 @@
         const row = document.createElement('div');
         row.className = 'dynamic-step-row';
         const stepIndex = container.children.length + 1;
-        row.innerHTML = \`
+        row.innerHTML = `
           <div class="step-number step-badge-num" style="cursor:default;">${stepIndex}</div>
           <div style="display:flex; flex-direction:column; gap:0.4rem;">
             <textarea class="textarea-input step-instruction" rows="2" placeholder="Step-by-step direction...">${escapeHtml(data.instruction)}</textarea>
             <input type="text" class="text-input step-tip-input" placeholder="💡 Optional tip (e.g. Watch closely so the garlic doesn't burn)" value="${escapeHtml(data.tip)}">
           </div>
           <button type="button" class="btn btn-light btn-sm btn-remove-step" title="Remove Step">✕</button>
-        \`;
+        `;
         row.querySelector('.btn-remove-step').addEventListener('click', () => {
           row.remove();
           renumberStepEditorRows();
@@ -2020,7 +2216,7 @@
         const label = document.getElementById('importBoxToggleLabel');
         if (!box || !label) return;
         box.classList.toggle('expanded', Boolean(expanded));
-        label.textContent = expanded ? 'Hide Importer ▴' : 'Show Importer ▾';
+        label.textContent = expanded ? 'Hide Importer ▾' : 'Show Importer ▴';
       }
 
       function openEditorModal(recipeToEdit = null, expandImporter = false) {
@@ -2214,14 +2410,19 @@
         }
       }
 
-      // Bind UI Events
+      // =========================================================================
+      // BIND UI EVENTS
+      // =========================================================================
       function bindEvents() {
-        document.getElementById('btnSubmitPasscode').addEventListener('click', handlePasscodeSubmit);
+        // Sign In Events
+        document.getElementById('btnGoogleSignIn').addEventListener('click', handleGoogleSignIn);
+        document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
         document.getElementById('familyPasswordInput').addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') handlePasscodeSubmit();
+          if (e.key === 'Enter') handleEmailAuth();
         });
         document.getElementById('btnSignOut').addEventListener('click', handleSignOut);
-        
+
+        // Filters & Search
         document.getElementById('searchInput').addEventListener('input', (e) => {
           activeFilters.search = e.target.value;
           renderRecipeGrid();
@@ -2239,7 +2440,8 @@
           renderAll();
         });
         document.getElementById('btnResetFilters').addEventListener('click', resetAllFilters);
-        
+
+        // Modals & Recipe Management
         document.getElementById('btnNewRecipe').addEventListener('click', () => {
           openEditorModal(null, false);
         });
@@ -2255,7 +2457,8 @@
           document.getElementById('rawRecipePasteInput').focus();
         });
         document.getElementById('btnRunRecipeParser').addEventListener('click', handleRunRecipeParser);
-        
+
+        // Dedication & Export
         document.getElementById('btnCustomizeBook').addEventListener('click', () => {
           document.getElementById('bookTitleInput').value = cookbookMeta.title;
           document.getElementById('bookSubtitleInput').value = cookbookMeta.subtitle;
@@ -2334,11 +2537,12 @@
           }
         });
 
-        // 🔒 Protected Deletion (Allows any authorized logged-in family user to delete)
+        // 🗑️ Delete Recipe (Available to all authorized family members)
         document.getElementById('btnDeleteCurrentRecipe').addEventListener('click', () => {
           const recipe = recipes.find(r => r.id === currentViewingRecipeId);
           if (!recipe) return;
-          if (confirm(`Are you completely sure you want to permanently delete "${recipe.title}"?`)) {
+
+          if (confirm(`Are you sure you want to permanently delete "${recipe.title}"?`)) {
             db.collection("recipes").doc(currentViewingRecipeId).delete()
               .then(() => {
                 document.getElementById('detailModal').classList.remove('open');
@@ -2360,7 +2564,7 @@
           addStepEditorRow();
         });
         document.getElementById('btnSaveRecipe').addEventListener('click', saveRecipeFromEditor);
-        
+
         document.getElementById('btnCloseDedicationModal').addEventListener('click', () => {
           document.getElementById('dedicationModal').classList.remove('open');
         });
