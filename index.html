@@ -832,6 +832,70 @@
       }
     }
 
+    /* Mobile usability refinements */
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body { overflow-x: hidden; }
+    button, input, select, textarea { touch-action: manipulation; }
+    button, .chip, .favorite-btn { -webkit-tap-highlight-color: transparent; }
+    .recipe-card, .chip, .btn { min-width: 0; }
+    .modal-body { min-width: 0; }
+    .dynamic-row > * { min-width: 0; }
+
+    @media (max-width: 640px) {
+      header { padding: 1.25rem 1rem 1rem; }
+      header::after { margin-top: 1rem; }
+      .header-inner { gap: 1rem; }
+      .brand-title h1 { font-size: clamp(1.65rem, 7vw, 2.15rem); line-height: 1.15; }
+      .brand-subtitle { font-size: 0.82rem; line-height: 1.4; }
+      .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .header-actions .user-greeting { grid-column: 1 / -1; margin: 0; text-align: center; }
+      .header-actions .btn { width: 100%; justify-content: center; min-height: 44px; padding: 0.65rem 0.5rem; font-size: 0.72rem; letter-spacing: 0.2px; }
+      .app-container { display: flex; flex-direction: column; gap: 1rem; padding: 1rem 0.85rem 2rem; }
+      .sidebar { position: static; padding: 1rem; border-radius: 8px; }
+      .sidebar-section { margin-bottom: 1rem; padding-bottom: 0.9rem; }
+      .sidebar-title { font-size: 1.05rem; margin-bottom: 0.65rem; }
+      .filter-chips { gap: 0.4rem; }
+      .chip { min-height: 36px; display: inline-flex; align-items: center; padding: 0.4rem 0.65rem; font-size: 0.78rem; }
+      .search-input, .select-input, .text-input, .textarea-input { min-height: 44px; font-size: 16px; }
+      .toolbar { align-items: stretch; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 0.85rem; }
+      .results-count { font-size: 1.15rem; }
+      .sort-controls { width: 100%; justify-content: space-between; }
+      .sort-controls .select-input { flex: 1; max-width: 68%; }
+      .recipe-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+      .card-body { padding: 1.15rem; }
+      .card-title { font-size: 1.3rem; margin-bottom: 0.55rem; }
+      .card-desc { margin-bottom: 0.9rem; }
+      .modal-backdrop { padding: 0; align-items: stretch; }
+      .modal-panel { width: 100%; max-width: none; min-height: 100%; margin: 0; border: 0; border-radius: 0; display: flex; flex-direction: column; overflow: visible; }
+      .modal-header { position: sticky; top: 0; z-index: 3; padding: 0.9rem 1rem; gap: 0.75rem; }
+      .modal-header h2 { font-size: 1.25rem; line-height: 1.25; }
+      .modal-header .btn { flex-shrink: 0; min-height: 40px; }
+      .modal-body { flex: 1; padding: 1rem; overflow: visible; }
+      .modal-footer { position: sticky; bottom: 0; z-index: 3; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); gap: 0.5rem; }
+      .modal-footer .btn { flex: 1; justify-content: center; min-height: 44px; padding: 0.65rem 0.5rem; }
+      .detail-header { padding-bottom: 1rem; margin-bottom: 1rem; }
+      .detail-meta-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; padding: 0.85rem; margin-bottom: 1.1rem; }
+      .detail-story { padding: 0.9rem 1rem; margin-bottom: 1.1rem; }
+      .detail-columns { gap: 1.25rem; }
+      .scale-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+      .scale-buttons .btn { min-height: 40px; }
+      .import-box { padding: 0.9rem; margin-bottom: 1rem; }
+      .import-box-header { align-items: flex-start; }
+      .import-box-header h3 { font-size: 1.05rem; }
+      .import-actions { display: grid; grid-template-columns: 1fr; }
+      .import-actions .btn { width: 100%; justify-content: center; min-height: 44px; }
+      .gate-card { padding: 1.5rem 1.1rem; }
+      .gate-card h2 { font-size: 1.7rem; }
+      .dynamic-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem; }
+      .form-grid { grid-template-columns: 1fr !important; }
+    }
+
+    @media (max-width: 380px) {
+      .header-actions { grid-template-columns: 1fr; }
+      .detail-meta-bar { grid-template-columns: 1fr 1fr; }
+      .dynamic-row { grid-template-columns: 1fr; }
+    }
+
     /* Print Styles */
     @media print {
       header, .sidebar, .toolbar, .modal-footer, .scale-buttons, .header-actions {
@@ -1472,7 +1536,7 @@
       function normalizeUnicodeFractions(text) {
         let out = text;
         for (const [uni, ascii] of Object.entries(UNICODE_FRACTIONS)) {
-          out = out.replace(new RegExp(`(\\\\d)${uni}`, 'g'), `$1 ${ascii}`);
+          out = out.replace(new RegExp(`(\\d)${uni}`, 'g'), `$1 ${ascii}`);
           out = out.replace(new RegExp(uni, 'g'), ascii);
         }
         return out;
@@ -1605,161 +1669,204 @@
 
       function parseCopiedRecipeText(rawText) {
         const result = {
-          title: '',
-          prepMins: null,
-          cookMins: null,
-          servings: null,
-          sourceUrl: '',
-          story: '',
-          ingredients: [],
-          steps: []
+          title: '', prepMins: null, cookMins: null, servings: null,
+          sourceUrl: '', story: '', ingredients: [], steps: []
         };
-        if (!rawText || !rawText.trim()) return result;
-        const rawLines = rawText
-          .replace(/\r\n/g, '\n')
-          .split('\n')
-          .map(l => l.trim())
+        if (!rawText || !String(rawText).trim()) return result;
+
+        const source = String(rawText).replace(/\r/g, '').trim();
+        // Recipe websites commonly embed a machine-readable Recipe object in JSON-LD.
+        const jsonLdMatch = source.match(/<script[^>]*type=[\"']application\/ld\+json[\"'][^>]*>([\s\S]*?)<\/script>/i);
+        if (jsonLdMatch) {
+          try {
+            const structured = JSON.parse(jsonLdMatch[1].trim());
+            const graphItems = Array.isArray(structured) ? structured : [structured];
+            for (const entry of graphItems) {
+              const graph = entry && Array.isArray(entry['@graph']) ? entry['@graph'] : [entry];
+              const recipe = graph.find(item => [].concat(item && item['@type'] || []).some(type => String(type).toLowerCase() === 'recipe'));
+              if (recipe) {
+                result.title = String(recipe.name || '').trim();
+                result.prepMins = recipe.prepTime ? parseDurationToMinutes(recipe.prepTime) : null;
+                result.cookMins = recipe.cookTime ? parseDurationToMinutes(recipe.cookTime) : null;
+                result.servings = parseInt(([].concat(recipe.recipeYield || [])[0] || '').toString().match(/\d+/)?.[0] || '', 10) || null;
+                result.sourceUrl = recipe.url || '';
+                result.story = String(recipe.description || '').trim();
+                result.ingredients = [].concat(recipe.recipeIngredient || []).map(parseSingleIngredientLine).filter(Boolean);
+                const flatten = value => !value ? [] : typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(flatten) : value.text ? [String(value.text)] : value.itemListElement ? flatten(value.itemListElement) : [];
+                result.steps = flatten(recipe.recipeInstructions).map(step => ({ instruction: String(step).replace(/<[^>]+>/g, ' ').trim(), tip: '' })).filter(step => step.instruction);
+                if (result.ingredients.length || result.steps.length) return result;
+              }
+            }
+          } catch (_) { /* Fall back to the pasted text parser. */ }
+        }
+        const cleanText = source
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/gi, ' ')
+          .replace(/&amp;/gi, '&')
+          .replace(/&quot;/gi, '"')
+          .replace(/&#39;|&apos;/gi, "'");
+
+        const isoDuration = value => {
+          if (!value) return null;
+          const match = String(value).match(/^PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?$/i);
+          if (!match) return parseDurationToMinutes(String(value));
+          return Math.round((Number(match[1] || 0) * 60) + Number(match[2] || 0));
+        };
+        const flattenInstructions = value => {
+          if (!value) return [];
+          if (typeof value === 'string') return [value];
+          if (Array.isArray(value)) return value.flatMap(flattenInstructions);
+          if (typeof value === 'object') {
+            if (value.text) return [String(value.text)];
+            if (value.name && value.itemListElement) return flattenInstructions(value.itemListElement);
+            if (value.itemListElement) return flattenInstructions(value.itemListElement);
+          }
+          return [];
+        };
+        const recipeFromJson = data => {
+          const candidates = Array.isArray(data) ? data : [data];
+          for (const entry of candidates) {
+            if (!entry || typeof entry !== 'object') continue;
+            const graph = Array.isArray(entry['@graph']) ? entry['@graph'] : [entry];
+            for (const item of graph) {
+              const types = [].concat(item && item['@type'] || []).map(t => String(t).toLowerCase());
+              if (!types.includes('recipe')) continue;
+              result.title = String(item.name || '').trim();
+              result.prepMins = isoDuration(item.prepTime);
+              result.cookMins = isoDuration(item.cookTime);
+              result.servings = parseInt(([].concat(item.recipeYield || [])[0] || '').toString().match(/\d+/)?.[0] || '', 10) || null;
+              result.sourceUrl = item.url || result.sourceUrl;
+              result.story = String(item.description || '').trim();
+              result.ingredients = [].concat(item.recipeIngredient || []).map(parseSingleIngredientLine).filter(Boolean);
+              result.steps = flattenInstructions(item.recipeInstructions).map(text => ({ instruction: String(text).replace(/<[^>]+>/g, ' ').trim(), tip: '' })).filter(step => step.instruction);
+              return true;
+            }
+          }
+          return false;
+        };
+
+        // If the user pasted raw JSON-LD or a JSON recipe object, use its structured fields.
+        try {
+          const jsonStart = cleanText.indexOf('{');
+          const jsonEnd = cleanText.lastIndexOf('}');
+          if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            const candidate = JSON.parse(cleanText.slice(jsonStart, jsonEnd + 1));
+            if (recipeFromJson(candidate) && (result.ingredients.length || result.steps.length)) return result;
+          }
+        } catch (_) { /* Continue with plain-text parsing. */ }
+
+        const lines = cleanText.split('\n')
+          .map(line => line.replace(/\s+/g, ' ').trim())
           .filter(Boolean);
-        for (const l of rawLines) {
-          const urlMatch = l.match(/https?:\/\/[^\s)]+/i);
-          if (urlMatch && !result.sourceUrl) {
-            result.sourceUrl = urlMatch[0];
+        const urlMatch = source.match(/https?:\/\/[^\s)\]>]+/i);
+        if (urlMatch) result.sourceUrl = urlMatch[0].replace(/[.,]+$/, '');
+
+        const ingredientHeading = /^(?:ingredients?|what you(?:'ll| will)? need|you will need|shopping list|for the ingredients?)\s*(?:\([^)]*\))?\s*:?[\s]*$/i;
+        const stepHeading = /^(?:instructions?|directions?|method|steps?|preparation|how to make(?: it)?|cooking instructions?)\s*:?[\s]*$/i;
+        const noteHeading = /^(?:notes?|tips?|recipe notes?|chef'?s notes?|cook'?s notes?|storage|nutrition(?:al)? (?:info|information|facts?))\s*:?[\s]*$/i;
+        const metaLabels = /^(?:prep(?:aration)?(?: time)?|cook(?:ing)?(?: time)?|total time|ready in|hands[- ]on time|inactive time|servings?|serves|yield|makes|course|cuisine|author|calories)\s*:?\s*(.*)$/i;
+        const isBoilerplate = line => /^(?:print recipe|pin recipe|jump to recipe|save recipe|rate this recipe|share this recipe|advertisement|ingredients and instructions|nutrition facts?)$/i.test(line);
+        const isNumberedStep = line => /^(?:step\s*\d+|\d{1,2}[.)])\s+\S/i.test(line);
+        const isStepLike = line => {
+          const text = line.replace(/^(?:step\s*\d+|\d{1,2}[.)])\s*/i, '').trim();
+          return /^(?:preheat|heat|melt|whisk|mix|stir|combine|add|pour|bake|cook|roast|fry|saute|sauté|simmer|boil|bring|place|put|set|prepare|line|grease|season|chop|dice|slice|mince|peel|cut|drain|rinse|transfer|remove|serve|garnish|top|let|allow|cover|reduce|turn|flip|fold|beat|cream|knead|roll|chill|refrigerate|freeze|marinate|toss|coat|brush|grill|broil)\b/i.test(text);
+        };
+
+        let section = 'HEADER';
+        const header = [], ingredientLines = [], stepLines = [], noteLines = [];
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (ingredientHeading.test(line)) { section = 'INGREDIENTS'; continue; }
+          if (stepHeading.test(line)) { section = 'STEPS'; continue; }
+          if (noteHeading.test(line)) { section = 'NOTES'; continue; }
+          if (isBoilerplate(line) || /^https?:\/\/\S+$/i.test(line)) continue;
+
+          const meta = line.match(metaLabels);
+          if (meta) {
+            const label = line.match(metaLabels)[0].split(':')[0].toLowerCase().replace(/\s+/g, ' ').trim();
+            const value = meta[1] || (i + 1 < lines.length ? lines[i + 1] : '');
+            if (/prep/.test(label)) result.prepMins = parseDurationToMinutes(value);
+            else if (/cook/.test(label)) result.cookMins = parseDurationToMinutes(value);
+            else if (/serv|yield|makes/.test(label)) result.servings = parseInt(String(value).match(/\d+/)?.[0] || '', 10) || null;
+            if (!meta[1] && value === lines[i + 1]) i++;
+            continue;
           }
+          const inlinePrep = line.match(/(?:prep(?:aration)?(?: time)?)\s*[:\-]?\s*(\d+(?:\.\d+)?\s*(?:hours?|hrs?|hr|h|minutes?|mins?|min|m))/i);
+          const inlineCook = line.match(/(?:cook(?:ing)?(?: time)?)\s*[:\-]?\s*(\d+(?:\.\d+)?\s*(?:hours?|hrs?|hr|h|minutes?|mins?|min|m))/i);
+          const inlineServings = line.match(/(?:serves?|servings?|yield|makes)\s*[:\-]?\s*(\d+)/i);
+          if (inlinePrep) result.prepMins = parseDurationToMinutes(inlinePrep[1]);
+          if (inlineCook) result.cookMins = parseDurationToMinutes(inlineCook[1]);
+          if (inlineServings) result.servings = parseInt(inlineServings[1], 10);
+          if (inlinePrep || inlineCook || inlineServings || /^total time\b/i.test(line)) continue;
+
+          if (section === 'INGREDIENTS') ingredientLines.push(line);
+          else if (section === 'STEPS') stepLines.push(line);
+          else if (section === 'NOTES') noteLines.push(line);
+          else header.push(line);
         }
-        const sectionHeaderIngredients = /^(?:ingredients?|what\s+you(?:'ll)?\s+need|for\s+the\s+ingredients?|shopping\s+list)\s*:?\s*$/i;
-        const sectionHeaderSteps = /^(?:instructions?|directions?|steps?|method|preparation|how\s+to\s+make(?:\s+it)?|cooking\s+instructions?)\s*:?\s*$/i;
-        const sectionHeaderNotes = /^(?:notes?|tips?|recipe\s+notes?|chef'?s?\s+notes?|cook'?s?\s+notes?|storage|nutrition(?:al)?\s*(?:info|information|facts)?)\s*:?\s*$/i;
-        let currentSection = 'HEADER'; 
-        const headerLines = [];
-        const rawIngredientLines = [];
-        const rawStepLines = [];
-        const rawNoteLines = [];
-        for (let i = 0; i < rawLines.length; i++) {
-          const line = rawLines[i];
-          const prepMatch = line.match(/prep(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
-          const cookMatch = line.match(/cook(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
-          const servMatch = line.match(/(?:servings?|serves|yield|makes)\s*:\s*(\d+)/i) ||
-                            line.match(/^(?:serves|makes)\s+(\d+)\b/i);
-          let isMetaLine = false;
-          if (prepMatch) {
-            const m = parseDurationToMinutes(prepMatch[1]);
-            if (m !== null) { result.prepMins = m; isMetaLine = true; }
-          }
-          if (cookMatch) {
-            const m = parseDurationToMinutes(cookMatch[1]);
-            if (m !== null) { result.cookMins = m; isMetaLine = true; }
-          }
-          if (servMatch) {
-            result.servings = parseInt(servMatch[1], 10);
-            isMetaLine = true;
-          }
-          if (/^prep(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
-            const m = parseDurationToMinutes(rawLines[i + 1]);
-            if (m !== null) { result.prepMins = m; i++; continue; }
-          }
-          if (/^cook(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
-            const m = parseDurationToMinutes(rawLines[i + 1]);
-            if (m !== null) { result.cookMins = m; i++; continue; }
-          }
-          if (/^(?:servings?|yield)\s*:?$/i.test(line) && i + 1 < rawLines.length) {
-            const sMatch = rawLines[i + 1].match(/(\d+)/);
-            if (sMatch) { result.servings = parseInt(sMatch[1], 10); i++; continue; }
-          }
-          if (/^(?:total\s*time|course|cuisine|keyword|author|calories)\s*:/i.test(line)) {
-            isMetaLine = true;
-          }
-          if (sectionHeaderIngredients.test(line)) {
-            currentSection = 'INGREDIENTS';
-            continue;
-          }
-          if (sectionHeaderSteps.test(line)) {
-            currentSection = 'STEPS';
-            continue;
-          }
-          if (sectionHeaderNotes.test(line)) {
-            currentSection = 'NOTES';
-            continue;
-          }
-          if (isMetaLine) continue;
-          if (/^https?:\/\/\S+$/i.test(line)) continue;
-          if (/^(?:print\s+recipe|pin\s+recipe|jump\s+to\s+recipe|save\s+recipe|rate\s+this\s+recipe|★★★★★|☆☆☆☆☆)$/i.test(line)) {
-            continue;
-          }
-          if (currentSection === 'INGREDIENTS') {
-            rawIngredientLines.push(line);
-          } else if (currentSection === 'STEPS') {
-            rawStepLines.push(line);
-          } else if (currentSection === 'NOTES') {
-            rawNoteLines.push(line);
-          } else {
-            headerLines.push(line);
-          }
+
+        // Title and optional introduction are taken from the pre-recipe header.
+        const usefulHeader = header.filter(line => !metaLabels.test(line) && !/^https?:\/\//i.test(line));
+        if (usefulHeader.length) {
+          result.title = usefulHeader[0].replace(/^#+\s*/, '').replace(/^recipe\s*[:\-]\s*/i, '').trim();
+          if (usefulHeader.length > 1) result.story = usefulHeader.slice(1).filter(line => line.length > 20 && !isStepLike(line)).join(' ').trim();
         }
-        if (rawIngredientLines.length === 0 && rawStepLines.length === 0 && headerLines.length > 0) {
-          let passedIngredients = false;
-          headerLines.forEach((line, idx) => {
-            if (idx === 0 && !looksLikeIngredientLine(line) && line.length < 90) {
-              result.title = line.replace(/^#+\s*/, '').trim();
-              return;
-            }
-            if (!passedIngredients && looksLikeIngredientLine(line)) {
-              rawIngredientLines.push(line);
-            } else if (rawIngredientLines.length > 0) {
-              passedIngredients = true;
-              rawStepLines.push(line);
-            } else if (idx === 1 && !result.story && line.length < 250) {
-              result.story = line;
-            } else {
-              rawStepLines.push(line);
-            }
-          });
-        } else {
-          if (headerLines.length > 0) {
-            result.title = headerLines[0].replace(/^#+\s*/, '').trim();
-            if (headerLines.length > 1) {
-              result.story = headerLines.slice(1).join(' ').trim();
+
+        // Fallback for pasted recipes without section labels. Separate likely ingredients from directions.
+        if (!ingredientLines.length && !stepLines.length && usefulHeader.length > 1) {
+          let foundIngredients = false;
+          for (const line of usefulHeader.slice(1)) {
+            if (!foundIngredients && looksLikeIngredientLine(line)) {
+              foundIngredients = true;
+              ingredientLines.push(line);
+            } else if (foundIngredients && (looksLikeIngredientLine(line) || ingredientLines.length < 2)) {
+              ingredientLines.push(line);
+            } else if (foundIngredients || isNumberedStep(line) || isStepLike(line)) {
+              stepLines.push(line);
             }
           }
+          if (!ingredientLines.length) {
+            const likelyIngredients = usefulHeader.slice(1).filter(looksLikeIngredientLine);
+            ingredientLines.push(...likelyIngredients);
+            stepLines.push(...usefulHeader.slice(1).filter(line => !likelyIngredients.includes(line)));
+          }
         }
-        rawIngredientLines.forEach(line => {
-          if (/^(?:for\s+the\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
-          if (rawStepLines.length === 0 && /^\d+[.)]\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
-            rawStepLines.push(line);
-            return;
-          }
-          const parsedIng = parseSingleIngredientLine(line);
-          if (parsedIng && (parsedIng.item || parsedIng.amount)) {
-            result.ingredients.push(parsedIng);
-          }
+
+        ingredientLines.forEach(line => {
+          const cleaned = line.replace(/^[•‣⁃▪▫◦*+\-–—☐☑✓✔]+\s*/, '').trim();
+          if (!cleaned || /^(?:for the .+|.+):$/i.test(cleaned)) return;
+          const parsed = parseSingleIngredientLine(cleaned);
+          if (parsed && (parsed.item || parsed.amount)) result.ingredients.push(parsed);
         });
-        for (let i = 0; i < rawStepLines.length; i++) {
-          let line = rawStepLines[i].trim();
-          if (/^step\s*\d+\s*:?$/i.test(line)) continue;
-          line = line.replace(/^(?:step\s*\d+\s*[:.\-–—)]\s*|\d+\s*[.)\-–—:]\s*|[•‣⁃▪▫◦\*+\-–—]\s*)/i, '').trim();
+
+        const combinedStepText = stepLines.join('\n');
+        const normalizedStepLines = combinedStepText
+          .split(/\n+/)
+          .map(line => line.trim())
+          .filter(Boolean);
+        for (let i = 0; i < normalizedStepLines.length; i++) {
+          let line = normalizedStepLines[i].replace(/^(?:step\s*\d+\s*[:.\-)]?\s*|\d{1,2}\s*[.)\-:]\s*|[•‣⁃▪▫◦*+\-–—]\s*)/i, '').trim();
           if (!line) continue;
           let tip = '';
-          const inlineTipMatch = line.match(/\s*(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
-          if (inlineTipMatch && inlineTipMatch.index > 10) {
-            tip = inlineTipMatch[1].trim();
-            line = line.slice(0, inlineTipMatch.index).trim();
-          } else if (i + 1 < rawStepLines.length && /^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i.test(rawStepLines[i + 1])) {
-            const nextTipMatch = rawStepLines[i + 1].match(/^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
-            if (nextTipMatch) {
-              tip = nextTipMatch[1].trim();
-              i++;
-            }
+          const inlineTip = line.match(/\s*(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+          if (inlineTip && inlineTip.index > 8) {
+            tip = inlineTip[1].trim();
+            line = line.slice(0, inlineTip.index).trim();
+          } else if (i + 1 < normalizedStepLines.length) {
+            const nextTip = normalizedStepLines[i + 1].match(/^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+            if (nextTip) { tip = nextTip[1].trim(); i++; }
           }
-          result.steps.push({ instruction: line, tip });
+          if (line) result.steps.push({ instruction: line, tip });
         }
-        if (rawNoteLines.length > 0 && result.steps.length > 0) {
-          const combinedNotes = rawNoteLines
-            .map(n => n.replace(/^[•\*-]\s*/, '').trim())
-            .filter(Boolean)
-            .join(' ');
+
+        if (noteLines.length && result.steps.length) {
+          const notes = noteLines.map(line => line.replace(/^[•*\-]\s*/, '').trim()).filter(Boolean).join(' ');
           const lastStep = result.steps[result.steps.length - 1];
-          if (combinedNotes && !lastStep.tip) {
-            lastStep.tip = combinedNotes;
-          }
+          if (notes) lastStep.tip = [lastStep.tip, notes].filter(Boolean).join(' ');
+        } else if (noteLines.length && !result.story) {
+          result.story = noteLines.join(' ');
         }
         return result;
       }
