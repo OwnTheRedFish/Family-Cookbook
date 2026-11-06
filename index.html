@@ -6,7 +6,8 @@
   <!-- Firebase SDK Compatibility Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Clemons Family — Family Cookbook</title>
@@ -31,13 +32,11 @@
       --font-serif: "Times New Roman", Georgia, serif;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
     body {
       background-color: var(--bg-paper);
       color: var(--text-main);
@@ -47,7 +46,6 @@
       display: flex;
       flex-direction: column;
     }
-
     /* Access Gate Overlay */
     #accessGateModal {
       position: fixed;
@@ -59,11 +57,9 @@
       justify-content: center;
       padding: 1.5rem;
     }
-
     #accessGateModal.unlocked {
       display: none;
     }
-
     .gate-card {
       background-color: #fff;
       border: 1px solid var(--border-color);
@@ -74,20 +70,17 @@
       padding: 2.5rem;
       text-align: center;
     }
-
     .gate-card h2 {
       font-family: var(--font-serif);
       font-weight: normal;
       font-size: 2rem;
       margin-bottom: 0.5rem;
     }
-
     .gate-card p {
       color: var(--text-muted);
       font-size: 0.9rem;
       margin-bottom: 1.5rem;
     }
-
     /* Header & Banner */
     header {
       background-color: var(--bg-card);
@@ -97,7 +90,6 @@
       text-align: center;
       position: relative;
     }
-
     header::after {
       content: '';
       display: block;
@@ -106,7 +98,6 @@
       background-color: var(--brand-gold);
       margin: 1.5rem auto 0 auto;
     }
-
     .header-inner {
       max-width: 1400px;
       margin: 0 auto;
@@ -115,7 +106,6 @@
       align-items: center;
       gap: 1.5rem;
     }
-
     .brand-title h1 {
       font-family: var(--font-serif);
       font-size: 2.6rem;
@@ -123,7 +113,6 @@
       letter-spacing: 1px;
       color: var(--text-main);
     }
-
     .brand-subtitle {
       font-size: 0.95rem;
       color: var(--text-muted);
@@ -132,7 +121,6 @@
       margin-top: 0.4rem;
       letter-spacing: 0.5px;
     }
-
     .header-actions {
       display: flex;
       flex-wrap: wrap;
@@ -140,7 +128,6 @@
       justify-content: center;
       align-items: center;
     }
-
     /* Buttons */
     .btn {
       font-family: var(--font-sans);
@@ -159,65 +146,53 @@
       background: var(--bg-card);
       color: var(--text-main);
     }
-
     .btn-primary {
       background-color: var(--brand-primary);
       color: #fff;
       border-color: var(--brand-primary);
     }
-
     .btn-primary:hover {
       background-color: var(--brand-primary-hover);
       border-color: var(--brand-primary-hover);
     }
-
     .btn-secondary {
       background-color: var(--brand-secondary);
       color: #fff;
       border-color: var(--brand-secondary);
     }
-
     .btn-secondary:hover {
       background-color: #99482b;
       border-color: #99482b;
     }
-
     .btn-outline {
       background-color: transparent;
       color: var(--text-main);
       border-color: var(--text-main);
     }
-
     .btn-outline:hover {
       background-color: var(--bg-accent);
     }
-
     .btn-light {
       background-color: var(--bg-accent);
       color: var(--text-main);
       border-color: var(--border-color);
     }
-
     .btn-light:hover {
       background-color: #ded8cb;
     }
-
     .btn-danger {
       background-color: #a33c3c;
       color: #fff;
       border-color: #a33c3c;
     }
-
     .btn-danger:hover {
       background-color: #822e2e;
       border-color: #822e2e;
     }
-
     .btn-sm {
       padding: 0.4rem 0.8rem;
       font-size: 0.75rem;
     }
-
     /* Status Banners */
     .status-banner {
       display: none;
@@ -227,21 +202,18 @@
       font-size: 0.9rem;
       font-weight: 500;
     }
-
     .status-banner.error {
       display: block;
       background-color: #fdf2f2;
       color: #9b1c1c;
       border: 1px solid #f8b4b4;
     }
-
     .status-banner.success {
       display: block;
       background-color: #f3faf7;
       color: #2d5a3c;
       border: 1px solid #bcf0da;
     }
-
     /* Quick Paste & Parse Importer Box */
     .import-box {
       background-color: #f7f3eb;
@@ -250,7 +222,6 @@
       padding: 1.25rem 1.5rem;
       margin-bottom: 1.75rem;
     }
-
     .import-box-header {
       display: flex;
       justify-content: space-between;
@@ -259,7 +230,6 @@
       cursor: pointer;
       user-select: none;
     }
-
     .import-box-header h3 {
       font-family: var(--font-serif);
       font-size: 1.2rem;
@@ -269,25 +239,21 @@
       align-items: center;
       gap: 0.5rem;
     }
-
     .import-box-body {
       display: none;
       margin-top: 1rem;
       padding-top: 1rem;
       border-top: 1px solid var(--border-color);
     }
-
     .import-box.expanded .import-box-body {
       display: block;
     }
-
     .import-hint {
       font-size: 0.84rem;
       color: var(--text-muted);
       margin-bottom: 0.75rem;
       line-height: 1.45;
     }
-
     .import-actions {
       display: flex;
       justify-content: flex-end;
@@ -295,7 +261,6 @@
       margin-top: 0.75rem;
       flex-wrap: wrap;
     }
-
     /* Layout */
     .app-container {
       max-width: 1400px;
@@ -307,7 +272,6 @@
       padding: 2.5rem 2rem;
       flex: 1;
     }
-
     /* Sidebar Filters */
     .sidebar {
       background-color: var(--bg-sidebar);
@@ -318,19 +282,16 @@
       position: sticky;
       top: 2rem;
     }
-
     .sidebar-section {
       margin-bottom: 1.75rem;
       padding-bottom: 1.5rem;
       border-bottom: 1px solid var(--border-color);
     }
-
     .sidebar-section:last-child {
       margin-bottom: 0;
       padding-bottom: 0;
       border-bottom: none;
     }
-
     .sidebar-title {
       font-family: var(--font-serif);
       font-size: 1.15rem;
@@ -342,7 +303,6 @@
       align-items: center;
       letter-spacing: 0.5px;
     }
-
     .search-input,
     .select-input,
     .text-input,
@@ -356,7 +316,6 @@
       font-family: var(--font-sans);
       font-size: 0.9rem;
     }
-
     .search-input:focus,
     .select-input:focus,
     .text-input:focus,
@@ -364,13 +323,11 @@
       outline: 1px solid var(--brand-primary);
       border-color: var(--brand-primary);
     }
-
     .filter-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
     }
-
     .chip {
       font-size: 0.8rem;
       padding: 0.4rem 0.8rem;
@@ -382,24 +339,20 @@
       transition: all 0.2s;
       user-select: none;
     }
-
     .chip:hover {
       border-color: var(--brand-primary);
       color: var(--text-main);
     }
-
     .chip.active {
       background-color: var(--brand-primary);
       color: #fff;
       border-color: var(--brand-primary);
       font-weight: 600;
     }
-
     /* Main Content Area */
     .main-area {
       min-width: 0;
     }
-
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -410,13 +363,11 @@
       border-bottom: 1px solid var(--border-color);
       gap: 1rem;
     }
-
     .results-count {
       font-family: var(--font-serif);
       font-size: 1.3rem;
       color: var(--text-main);
     }
-
     .sort-controls {
       display: flex;
       align-items: center;
@@ -424,14 +375,12 @@
       font-size: 0.85rem;
       color: var(--text-muted);
     }
-
     /* Recipe Grid */
     .recipe-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 2rem;
     }
-
     .recipe-card {
       background-color: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -444,31 +393,26 @@
       cursor: pointer;
       position: relative;
     }
-
     .recipe-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
     }
-
     .card-banner {
       height: 4px;
       background-color: var(--brand-primary);
     }
-
     .card-body {
       padding: 1.75rem;
       flex: 1;
       display: flex;
       flex-direction: column;
     }
-
     .card-badges {
       display: flex;
       flex-wrap: wrap;
       gap: 0.4rem;
       margin-bottom: 0.85rem;
     }
-
     .badge {
       font-size: 0.7rem;
       text-transform: uppercase;
@@ -477,22 +421,18 @@
       padding: 0.25rem 0.65rem;
       border-radius: var(--radius-sm);
     }
-
     .badge-meal {
       background-color: #f3ede2;
       color: #7d653f;
     }
-
     .badge-origin {
       background-color: #e6ebdf;
       color: #3b5037;
     }
-
     .badge-course {
       background-color: #ebd9cd;
       color: #753b1b;
     }
-
     .card-title {
       font-family: var(--font-serif);
       font-size: 1.5rem;
@@ -501,7 +441,6 @@
       line-height: 1.25;
       font-weight: normal;
     }
-
     .card-desc {
       font-size: 0.9rem;
       color: var(--text-muted);
@@ -513,7 +452,6 @@
       flex: 1;
       line-height: 1.5;
     }
-
     .card-meta {
       display: flex;
       justify-content: space-between;
@@ -523,7 +461,6 @@
       font-size: 0.85rem;
       color: var(--text-muted);
     }
-
     .favorite-btn {
       background: none;
       border: none;
@@ -534,15 +471,12 @@
       line-height: 1;
       padding: 0.25rem;
     }
-
     .favorite-btn.active {
       color: #c95d51;
     }
-
     .favorite-btn:hover {
       transform: scale(1.15);
     }
-
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -551,19 +485,16 @@
       border: 1px dashed var(--border-color);
       border-radius: var(--radius-md);
     }
-
     .empty-state h3 {
       font-family: var(--font-serif);
       font-size: 1.7rem;
       font-weight: normal;
       margin-bottom: 0.75rem;
     }
-
     .empty-state p {
       color: var(--text-muted);
       margin-bottom: 1.5rem;
     }
-
     /* Modals / Overlays */
     .modal-backdrop {
       position: fixed;
@@ -577,11 +508,9 @@
       overflow-y: auto;
       z-index: 1000;
     }
-
     .modal-backdrop.open {
       display: flex;
     }
-
     .modal-panel {
       background-color: var(--bg-paper);
       border: 1px solid var(--border-color);
@@ -592,7 +521,6 @@
       overflow: hidden;
       margin: auto 0;
     }
-
     .modal-header {
       background-color: var(--bg-sidebar);
       padding: 1.5rem 2.25rem;
@@ -602,17 +530,14 @@
       align-items: center;
       gap: 1.5rem;
     }
-
     .modal-header h2 {
       font-family: var(--font-serif);
       font-weight: normal;
       font-size: 1.75rem;
     }
-
     .modal-body {
       padding: 2.25rem;
     }
-
     .modal-footer {
       background-color: var(--bg-sidebar);
       padding: 1.25rem 2.25rem;
@@ -621,14 +546,12 @@
       justify-content: flex-end;
       gap: 1rem;
     }
-
     /* Recipe Detail View inside Modal */
     .detail-header {
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 1.5rem;
       margin-bottom: 2rem;
     }
-
     .detail-story {
       background-color: #f7f3eb;
       border-left: 2px solid var(--brand-gold);
@@ -640,7 +563,6 @@
       color: #3b3d34;
       line-height: 1.7;
     }
-
     .detail-meta-bar {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -651,11 +573,9 @@
       margin-bottom: 2rem;
       border: 1px solid var(--border-color);
     }
-
     .meta-item {
       text-align: center;
     }
-
     .meta-label {
       font-size: 0.7rem;
       text-transform: uppercase;
@@ -664,19 +584,16 @@
       display: block;
       margin-bottom: 0.25rem;
     }
-
     .meta-value {
       font-weight: 600;
       font-size: 1.05rem;
       color: var(--text-main);
     }
-
     .detail-columns {
       display: grid;
       grid-template-columns: 1fr 1.5fr;
       gap: 2.5rem;
     }
-
     .section-heading {
       font-family: var(--font-serif);
       font-size: 1.35rem;
@@ -689,12 +606,10 @@
       align-items: center;
       letter-spacing: 0.5px;
     }
-
     .scale-buttons {
       display: inline-flex;
       gap: 0.25rem;
     }
-
     .scale-btn {
       padding: 0.25rem 0.5rem;
       font-size: 0.75rem;
@@ -703,17 +618,14 @@
       border-radius: var(--radius-sm);
       cursor: pointer;
     }
-
     .scale-btn.active {
       background: var(--brand-primary);
       color: #fff;
       border-color: var(--brand-primary);
     }
-
     .ingredient-list {
       list-style: none;
     }
-
     .ingredient-item {
       padding: 0.65rem 0;
       border-bottom: 1px dashed var(--border-color);
@@ -722,22 +634,18 @@
       gap: 0.75rem;
       font-size: 0.95rem;
     }
-
     .ingredient-item input[type="checkbox"] {
       margin-top: 0.35rem;
       accent-color: var(--brand-primary);
       cursor: pointer;
     }
-
     .ingredient-item.checked span {
       text-decoration: line-through;
       color: var(--text-muted);
     }
-
     .step-list {
       list-style: none;
     }
-
     .step-item {
       background-color: #fff;
       border: 1px solid var(--border-color);
@@ -749,12 +657,10 @@
       align-items: flex-start;
       transition: background-color 0.2s;
     }
-
     .step-item.completed {
       background-color: #f7f5ef;
       opacity: 0.7;
     }
-
     .step-number {
       background-color: var(--brand-primary);
       color: #fff;
@@ -769,21 +675,17 @@
       flex-shrink: 0;
       cursor: pointer;
     }
-
     .step-item.completed .step-number {
       background-color: var(--text-muted);
     }
-
     .step-content {
       flex: 1;
     }
-
     .step-text {
       font-size: 0.95rem;
       margin-bottom: 0.35rem;
       line-height: 1.6;
     }
-
     .step-tip {
       font-size: 0.85rem;
       background-color: #faf6eb;
@@ -793,7 +695,6 @@
       margin-top: 0.5rem;
       border-left: 2px solid var(--brand-gold);
     }
-
     .family-notes-box {
       margin-top: 2rem;
       background-color: #f4f6f3; /* Very soft sage block */
@@ -801,7 +702,6 @@
       border-radius: var(--radius-sm);
       padding: 1.25rem 1.5rem;
     }
-
     .family-notes-box h4 {
       font-family: var(--font-serif);
       color: var(--brand-primary);
@@ -809,7 +709,6 @@
       font-size: 1.1rem;
       font-weight: normal;
     }
-
     /* Form Grid inside Editor Modal */
     .form-grid {
       display: grid;
@@ -817,14 +716,12 @@
       gap: 1.25rem;
       margin-bottom: 1.25rem;
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
       margin-bottom: 1.25rem;
     }
-
     .form-group label {
       font-size: 0.8rem;
       font-weight: 600;
@@ -832,7 +729,6 @@
       letter-spacing: 0.5px;
       color: var(--text-main);
     }
-
     .dynamic-row {
       display: grid;
       grid-template-columns: 100px 100px 1fr 140px auto;
@@ -840,7 +736,6 @@
       margin-bottom: 0.5rem;
       align-items: center;
     }
-
     .dynamic-step-row {
       display: grid;
       grid-template-columns: 34px 1fr auto;
@@ -852,45 +747,37 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
     }
-
     /* Responsive adjustments */
     @media (max-width: 920px) {
       .app-container {
         grid-template-columns: 1fr;
         padding: 1.5rem 1rem;
       }
-
       .sidebar {
         position: static;
       }
-
       .detail-columns {
         grid-template-columns: 1fr;
       }
-
       .dynamic-row {
         grid-template-columns: 1fr 1fr;
       }
     }
-
     /* Print Styles */
     @media print {
       header, .sidebar, .toolbar, .modal-footer, .scale-buttons, .header-actions {
         display: none !important;
       }
-
       body {
         background: #fff;
         color: #000;
       }
-
       .modal-backdrop {
         position: static;
         background: none;
         padding: 0;
         display: block !important;
       }
-
       .modal-panel {
         box-shadow: none;
         border: none;
@@ -900,36 +787,34 @@
   </style>
 </head>
 <body>
-
-  <!-- Family Access Passphrase Gate -->
+  <!-- Family Access Authentication Panel -->
   <div id="accessGateModal">
     <div class="gate-card">
       <h2>👪 Family Kitchen</h2>
-      <p>Enter the Clemons Family Passphrase to open the cookbook.</p>
+      <p>Log in with your authorized family email address to open the cookbook.</p>
       <div id="gateErrorBanner" class="status-banner" style="margin-bottom: 1rem;"></div>
-      <input type="password" id="familyPasscodeInput" class="text-input" placeholder="Enter passphrase..." style="text-align: center; margin-bottom: 1rem;">
+      <input type="email" id="familyEmailInput" class="text-input" placeholder="Family email address..." style="text-align: center; margin-bottom: 0.75rem;">
+      <input type="password" id="familyPasswordInput" class="text-input" placeholder="Enter password..." style="text-align: center; margin-bottom: 1rem;">
       <button type="button" class="btn btn-primary" id="btnSubmitPasscode" style="width: 100%; justify-content: center;">Enter Cookbook</button>
     </div>
   </div>
-
   <header>
     <div class="header-inner">
       <div class="brand-title">
         <h1 id="cookbookHeaderTitle">The Clemons Family Cookbook</h1>
         <div class="brand-subtitle" id="cookbookHeaderSubtitle">Kitchen memories, family recipes &amp; daily gatherings</div>
       </div>
-
       <div class="header-actions">
         <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Family Recipe</button>
         <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">📋 Paste &amp; Import Recipe</button>
         <button type="button" class="btn btn-outline" id="btnCustomizeBook">✒️ Cookbook Dedication</button>
         <button type="button" class="btn btn-outline" id="btnExportBook">💾 Backup JSON</button>
         <button type="button" class="btn btn-outline" id="btnTriggerRestore">📂 Restore JSON</button>
+        <button type="button" class="btn btn-light" id="btnSignOut">🚪 Sign Out</button>
         <input type="file" id="fileRestoreInput" accept=".json" style="display:none">
       </div>
     </div>
   </header>
-
   <div class="app-container">
     <!-- Multi-Filter Sidebar -->
     <aside class="sidebar">
@@ -940,35 +825,30 @@
         </div>
         <input type="search" id="searchInput" class="search-input" placeholder="Search ingredients, names, memory keys...">
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">
           <span>Meal Type</span>
         </div>
         <div class="filter-chips" id="filterMealType"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">
           <span>Cuisine</span>
         </div>
         <div class="filter-chips" id="filterOrigin"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">
           <span>Course</span>
         </div>
         <div class="filter-chips" id="filterCourse"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">
           <span>Dietary &amp; Style Tags</span>
         </div>
         <div class="filter-chips" id="filterTags"></div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-title">
           <span>Quick Filters</span>
@@ -979,7 +859,6 @@
         </div>
       </div>
     </aside>
-
     <!-- Main Recipe Listing -->
     <main class="main-area">
       <div class="toolbar">
@@ -995,11 +874,9 @@
           </select>
         </div>
       </div>
-
       <div id="recipeGrid" class="recipe-grid"></div>
     </main>
   </div>
-
   <!-- MODAL 1: Recipe Detail & Interactive Cooking View -->
   <div class="modal-backdrop" id="detailModal">
     <div class="modal-panel">
@@ -1015,7 +892,6 @@
       <div class="modal-body" id="detailModalBody"></div>
     </div>
   </div>
-
   <!-- MODAL 2: Add / Edit Recipe -->
   <div class="modal-backdrop" id="editorModal">
     <div class="modal-panel">
@@ -1025,7 +901,6 @@
       </div>
       <div class="modal-body">
         <div id="editorValidationBanner" class="status-banner"></div>
-
         <!-- Smart Paste & Parse Online Recipe Importer -->
         <div class="import-box" id="recipeImportBox">
           <div class="import-box-header" id="importBoxToggle">
@@ -1043,17 +918,15 @@
             </div>
           </div>
         </div>
-
         <div class="form-grid">
           <div class="form-group" style="grid-column: span 2;">
-            <label for="editTitle">Recipe Name *</label>
+            <label for="editTitle">Recipe Name \*</label>
             <input type="text" id="editTitle" class="text-input" placeholder="e.g., Cast-Iron Skillet Buttermilk Cornbread">
           </div>
         </div>
-
         <div class="form-grid">
           <div class="form-group">
-            <label for="editMealType">Meal Type *</label>
+            <label for="editMealType">Meal Type \*</label>
             <select id="editMealType" class="select-input">
               <option value="Breakfast">Breakfast</option>
               <option value="Brunch">Brunch</option>
@@ -1094,7 +967,6 @@
             </select>
           </div>
         </div>
-
         <div class="form-grid">
           <div class="form-group">
             <label for="editServings">Default Servings</label>
@@ -1113,12 +985,10 @@
             <input type="text" id="editTags" class="text-input" placeholder="Comfort Food, Autumn, Easy Holiday">
           </div>
         </div>
-
         <div class="form-group">
           <label for="editStory">Family Memory</label>
           <textarea id="editStory" class="textarea-input" rows="3" placeholder="Why we cook this, where the memory came from, or kitchen gatherings when we eat this..."></textarea>
         </div>
-
         <!-- Ingredients Editor -->
         <div class="form-group" style="margin-top: 1.25rem;">
           <div class="section-heading">
@@ -1127,7 +997,6 @@
           </div>
           <div id="ingredientRowsContainer"></div>
         </div>
-
         <!-- Steps & Directions Editor -->
         <div class="form-group" style="margin-top: 1.25rem;">
           <div class="section-heading">
@@ -1136,7 +1005,6 @@
           </div>
           <div id="stepRowsContainer"></div>
         </div>
-
         <!-- Personal Adjustments & Source -->
         <div class="form-grid" style="margin-top: 1.25rem;">
           <div class="form-group">
@@ -1155,7 +1023,6 @@
       </div>
     </div>
   </div>
-
   <!-- MODAL 3: Customize Cookbook Title & Dedication -->
   <div class="modal-backdrop" id="dedicationModal">
     <div class="modal-panel" style="max-width: 600px;">
@@ -1178,17 +1045,14 @@
       </div>
     </div>
   </div>
-
   <script>
     (function () {
       'use strict';
-
       // =========================================================================
       // 🔒 SECURITY KEYS & PASSWORDS
-      // Custom credentials to protect your database access.
+      // Admin user email address is used to grant administrative privileges.
       // =========================================================================
-      const FAMILY_PASSPHRASE = "ClemonsKitchen"; // Give this to your family to access
-      const ADMIN_DELETE_PIN = "7492";            // Keep this secret: only you can delete recipes
+      const ADMIN_EMAIL = "kristimilman@gmail.com";
 
       // Firebase Config containing your live credentials
       const firebaseConfig = {
@@ -1200,9 +1064,9 @@
         appId: "1:232806060471:web:d320e16c5cafe10d2b1832",
         measurementId: "G-9LSTPRDZXJ"
       };
-
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
+      const auth = firebase.auth();
 
       // Meal Types Order definition
       const MEAL_TYPES_ORDER = [
@@ -1280,7 +1144,6 @@
         title: 'The Clemons Family Cookbook',
         subtitle: 'Kitchen memories, family recipes & daily gatherings'
       };
-
       let activeFilters = {
         search: '',
         mealType: 'ALL',
@@ -1291,29 +1154,56 @@
         quickOnly: false,
         sortBy: 'mealType'
       };
-
       let currentViewingRecipeId = null;
       let currentEditingRecipeId = null;
       let currentScaleMultiplier = 1;
 
-      // Access Gate Check
-      function checkAccessGate() {
-        const storedAuth = sessionStorage.getItem('clemons_cookbook_authorized');
-        if (storedAuth === 'true') {
+      // Access Gate Listener (Handles User Auth & UI Protection)
+      auth.onAuthStateChanged((user) => {
+        if (user) {
           document.getElementById('accessGateModal').classList.add('unlocked');
+          
+          // Any authorized logged-in family user can Add, Edit, or Delete recipes
+          document.getElementById('btnNewRecipe').style.display = 'inline-flex';
+          document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
+          document.getElementById('btnEditCurrentRecipe').style.display = 'inline-flex';
+          document.getElementById('btnDeleteCurrentRecipe').style.display = 'inline-flex';
+          
+          // Administrative Only tools protected for kristimilman@gmail.com
+          if (user.email === ADMIN_EMAIL) {
+            document.getElementById('btnCustomizeBook').style.display = 'inline-flex';
+            document.getElementById('btnTriggerRestore').style.display = 'inline-flex';
+          } else {
+            document.getElementById('btnCustomizeBook').style.display = 'none';
+            document.getElementById('btnTriggerRestore').style.display = 'none';
+          }
+          
+          loadState();
+        } else {
+          document.getElementById('accessGateModal').classList.remove('unlocked');
         }
-      }
+      });
 
       function handlePasscodeSubmit() {
-        const input = document.getElementById('familyPasscodeInput').value.trim();
+        const emailInput = document.getElementById('familyEmailInput').value.trim();
+        const passwordInput = document.getElementById('familyPasswordInput').value.trim();
         const errBanner = document.getElementById('gateErrorBanner');
-        if (input === FAMILY_PASSPHRASE) {
-          sessionStorage.setItem('clemons_cookbook_authorized', 'true');
-          document.getElementById('accessGateModal').classList.add('unlocked');
-        } else {
+
+        if (!emailInput || !passwordInput) {
           errBanner.className = 'status-banner error';
-          errBanner.textContent = 'Incorrect passphrase. Please try again.';
+          errBanner.textContent = 'Please enter both your family email address and password.';
+          return;
         }
+
+        auth.signInWithEmailAndPassword(emailInput, passwordInput)
+          .catch((error) => {
+            errBanner.className = 'status-banner error';
+            errBanner.textContent = 'Verification failed: ' + error.message;
+          });
+      }
+
+      function handleSignOut() {
+        auth.signOut();
       }
 
       function escapeHtml(str) {
@@ -1334,10 +1224,8 @@
         const tolerance = 0.01;
         const whole = Math.floor(val);
         const frac = val - whole;
-
         if (frac < tolerance) return whole > 0 ? String(whole) : '';
         if (Math.abs(frac - 1) < tolerance) return String(whole + 1);
-
         const commonFractions = [
           { value: 1/2, display: '1/2' },
           { value: 1/3, display: '1/3' },
@@ -1355,17 +1243,14 @@
           { value: 1/6, display: '1/6' },
           { value: 5/6, display: '5/6' }
         ];
-
         for (const f of commonFractions) {
           if (Math.abs(frac - f.value) < tolerance) {
-            return whole > 0 ? `${whole} ${f.display}` : f.display;
+            return whole > 0 ? \`${whole} ${f.display}\` : f.display;
           }
         }
-
         let bestDenominator = 1;
         let bestNumerator = 0;
         let minDiff = frac;
-
         for (let d = 2; d <= 16; d++) {
           const n = Math.round(frac * d);
           const diff = Math.abs(frac - (n / d));
@@ -1375,39 +1260,33 @@
             bestNumerator = n;
           }
         }
-
         if (bestNumerator > 0 && minDiff < 0.05) {
           const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
           const divisor = gcd(bestNumerator, bestDenominator);
           const simplifiedNumerator = bestNumerator / divisor;
           const simplifiedDenominator = bestDenominator / divisor;
-          const fracDisplay = `${simplifiedNumerator}/${simplifiedDenominator}`;
-          return whole > 0 ? `${whole} ${fracDisplay}` : fracDisplay;
+          const fracDisplay = \`${simplifiedNumerator}/${simplifiedDenominator}\`;
+          return whole > 0 ? \`${whole} ${fracDisplay}\` : fracDisplay;
         }
-
         return String(parseFloat(val.toFixed(2)));
       }
 
       function formatScaledAmount(amountStr, multiplier) {
         if (!amountStr) return '';
         const trimmed = String(amountStr).trim();
-
-        const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
-        const fractionMatch = trimmed.match(/^(\d+)\s*\/\s*(\d+)$/);
+        const mixedMatch = trimmed.match(/^(\\d+)\\s+(\\d+)\\s\*\\/\\s\*(\\d+)$/);
+        const fractionMatch = trimmed.match(/^(\\d+)\\s\*\\/\\s\*(\\d+)$/);
         let numVal = NaN;
-
         if (mixedMatch) {
           numVal = parseFloat(mixedMatch[1]) + (parseFloat(mixedMatch[2]) / parseFloat(mixedMatch[3]));
         } else if (fractionMatch) {
           numVal = parseFloat(fractionMatch[1]) / parseFloat(fractionMatch[2]);
-        } else if (/^\d+(\.\d+)?$/.test(trimmed)) {
+        } else if (/^\\d+(\\.\\d+)?$/.test(trimmed)) {
           numVal = parseFloat(trimmed);
         }
-
         if (isNaN(numVal)) {
-          return multiplier === 1 ? trimmed : `${trimmed} (×${multiplier})`;
+          return multiplier === 1 ? trimmed : \`${trimmed} (×${multiplier})\`;
         }
-
         const scaled = numVal * multiplier;
         return getFractionString(scaled);
       }
@@ -1418,7 +1297,6 @@
         '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5', '⅙': '1/6',
         '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8'
       };
-
       const KNOWN_UNITS = new Set([
         'cup', 'cups', 'c', 'c.',
         'tablespoon', 'tablespoons', 'tbsp', 'tbsp.', 'tbs', 'tbs.', 'T',
@@ -1446,7 +1324,7 @@
       function normalizeUnicodeFractions(text) {
         let out = text;
         for (const [uni, ascii] of Object.entries(UNICODE_FRACTIONS)) {
-          out = out.replace(new RegExp(`(\\d)${uni}`, 'g'), `$1 ${ascii}`);
+          out = out.replace(new RegExp(\`(\\\\d)${uni}\`, 'g'), \`$1 ${ascii}\`);
           out = out.replace(new RegExp(uni, 'g'), ascii);
         }
         return out;
@@ -1456,8 +1334,8 @@
         if (!text) return null;
         let total = 0;
         let matched = false;
-        const hrMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)\b/i);
-        const minMatch = text.match(/(\d+)\s*(?:minutes?|mins?|min|m)\b/i);
+        const hrMatch = text.match(/(\\d+(?:\\.\\d+)?)\\s\*(?:hours?|hrs?|hr|h)\\b/);
+        const minMatch = text.match(/(\\d+)\\s\*(?:minutes?|mins?|min|m)\\b/);
         if (hrMatch) {
           total += Math.round(parseFloat(hrMatch[1]) * 60);
           matched = true;
@@ -1467,7 +1345,7 @@
           matched = true;
         }
         if (!matched) {
-          const bareNum = text.match(/\b(\d+)\b/);
+          const bareNum = text.match(/\\b(\\d+)\\b/);
           if (bareNum) return parseInt(bareNum[1], 10);
         }
         return matched ? total : null;
@@ -1475,48 +1353,41 @@
 
       function parseSingleIngredientLine(rawLine) {
         let line = normalizeUnicodeFractions(rawLine)
-          .replace(/^[\s•‣⁃▪▫◦*+\-–—☐☑✓✔✗✘[\]()]+/, '')
+          .replace(/^[\\s•‣⁃▪▫◦\*+\\-–—☐☑✓✔✗✘[\\]()]+/, '')
           .trim();
-
         if (!line) return null;
-
         let amount = '';
         let unit = '';
         let item = '';
         let note = '';
-
-        const trailingParenMatch = line.match(/\s*\(([^)]+)\)\s*$/);
-        if (trailingParenMatch && !/^\d+\s*(oz|g|ml|lb)/i.test(trailingParenMatch[1])) {
+        const trailingParenMatch = line.match(/\\s\*\\(([^)]+)\\)\\s\*$/);
+        if (trailingParenMatch && !/^\\d+\\s\*(oz|g|ml|lb)/i.test(trailingParenMatch[1])) {
           note = trailingParenMatch[1].trim();
           line = line.slice(0, trailingParenMatch.index).trim();
         }
-
-        const qtyRegex = /^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+(?:\.\d+)?(?:\s*(?:-|–|to)\s*\d+(?:\.\d+)?)?)\s*(.*)$/i;
+        const qtyRegex = /^(\\d+\\s+\\d+\\s\*\\/\\s\*\\d+|\\d+\\s\*\\/\\s\*\\d+|\\d+(?:\\.\\d+)?(?:\\s\*(?:-|–|to)\\s\*\\d+(?:\\.\\d+)?)?)\\s\*(.\*)$/i;
         const qtyMatch = line.match(qtyRegex);
-
         let remainder = line;
         if (qtyMatch) {
-          amount = qtyMatch[1].replace(/\s+/g, ' ').trim();
+          amount = qtyMatch[1].replace(/\\s+/g, ' ').trim();
           remainder = qtyMatch[2].trim();
-        } else if (/^(a|an)\s+/i.test(line)) {
-          const wordMatch = line.match(/^(a|an)\s+(pinch|dash|handful|bunch|clove|sprig|slice|can|jar|package|head|piece)\b\s*(.*)$/i);
+        } else if (/^(a|an)\\s+/i.test(line)) {
+          const wordMatch = line.match(/^(a|an)\\s+(pinch|dash|handful|bunch|clove|sprig|slice|can|jar|package|head|piece)\\b\\s\*(.\*)$/i);
           if (wordMatch) {
             amount = '1';
             unit = wordMatch[2].toLowerCase();
-            remainder = wordMatch[3].replace(/^of\s+/i, '').trim();
+            remainder = wordMatch[3].replace(/^of\\s+/i, '').trim();
           }
         }
-
         if (!unit && remainder) {
-          const parenCanMatch = remainder.match(/^(\(\d+[^)]*\)\s*(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)|(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)\s*\(\d+[^)]*\))\s+(.*)$/i);
+          const parenCanMatch = remainder.match(/^(\\(\\d+[^)]\*\\)\\s\*(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)|(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)\\s\*\\(\\d+[^)]\*\\))\\s+(.\*)$/i);
           if (parenCanMatch) {
             unit = parenCanMatch[1].trim();
             remainder = parenCanMatch[2].trim();
           } else {
-            const tokens = remainder.split(/\s+/);
+            const tokens = remainder.split(/\\s+/);
             const firstTwo = tokens.slice(0, 2).join(' ').toLowerCase().replace(/[.,]$/, '');
             const firstOne = tokens[0].toLowerCase().replace(/[.,]$/, '');
-
             if (KNOWN_UNITS.has(firstTwo)) {
               unit = tokens.slice(0, 2).join(' ').replace(/[.,]$/, '');
               remainder = tokens.slice(2).join(' ').trim();
@@ -1525,30 +1396,27 @@
               remainder = tokens.slice(1).join(' ').trim();
             }
           }
-          remainder = remainder.replace(/^of\s+/i, '').trim();
+          remainder = remainder.replace(/^of\\s+/i, '').trim();
         } else if (!amount && remainder) {
-          const stuckMatch = remainder.match(/^(\d+(?:\.\d+)?)(g|kg|mg|ml|l|oz|lb|lbs|tbsp|tsp|c)\b\.?\s+(.*)$/i);
+          const stuckMatch = remainder.match(/^(\\d+(?:\\.\\d+)?)(g|kg|mg|ml|l|oz|lb|lbs|tbsp|tsp|c)\\b\\.?\\s+(.\*)$/i);
           if (stuckMatch) {
             amount = stuckMatch[1];
             unit = stuckMatch[2];
-            remainder = stuckMatch[3].replace(/^of\s+/i, '').trim();
+            remainder = stuckMatch[3].replace(/^of\\s+/i, '').trim();
           }
         }
-
         const commaIdx = remainder.indexOf(',');
         if (commaIdx !== -1) {
           item = remainder.slice(0, commaIdx).trim();
           const commaNote = remainder.slice(commaIdx + 1).trim();
-          note = note ? `${commaNote}; ${note}` : commaNote;
+          note = note ? \`${commaNote}; ${note}\` : commaNote;
         } else {
           item = remainder.trim();
         }
-
         if (!item && unit) {
           item = unit;
           unit = '';
         }
-
         return {
           amount,
           unit,
@@ -1559,14 +1427,13 @@
 
       function looksLikeIngredientLine(line) {
         const norm = normalizeUnicodeFractions(line)
-          .replace(/^[\s•‣⁃▪▫◦*+\-–—☐☑✓✔]+/, '')
+          .replace(/^[\\s•‣⁃▪▫◦\*+\\-–—☐☑✓✔]+/, '')
           .trim();
         if (!norm || norm.length > 130) return false;
-
-        if (/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*([a-zA-Z]+|\(\d+)/.test(norm)) {
-          if (/^\d+[.)]\s+[A-Z]/.test(line.trim())) {
-            const afterNum = line.trim().replace(/^\d+[.)]\s+/, '');
-            const firstWord = afterNum.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+        if (/^(\\d+\\s+\\d+\\/\\d+|\\d+\\/\\d+|\\d+(?:\\.\\d+)?)\\s\*([a-zA-Z]+|\\(\\d+)/.test(norm)) {
+          if (/^\\d+[.)]\\s+[A-Z]/.test(line.trim())) {
+            const afterNum = line.trim().replace(/^\\d+[.)]\\s+/, '');
+            const firstWord = afterNum.split(/\\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
             const cookingVerbs = new Set([
               'preheat', 'heat', 'melt', 'whisk', 'mix', 'stir', 'combine', 'add', 'pour',
               'bake', 'cook', 'roast', 'fry', 'saute', 'sauté', 'simmer', 'boil', 'bring',
@@ -1582,11 +1449,9 @@
           }
           return true;
         }
-
-        if (/^(a\s+pinch|a\s+dash|a\s+handful|salt\s+and\s+pepper|kosher\s+salt|sea\s+salt|freshly\s+ground|to\s+taste|cooking\s+spray|olive\s+oil)/i.test(norm)) {
+        if (/^(a\\s+pinch|a\\s+dash|a\\s+handful|salt\\s+and\\s+pepper|kosher\\s+salt|sea\\s+salt|freshly\\s+ground|to\\s+taste|cooking\\s+spray|olive\\s+oil)/i.test(norm)) {
           return true;
         }
-
         return false;
       }
 
@@ -1601,40 +1466,32 @@
           ingredients: [],
           steps: []
         };
-
         if (!rawText || !rawText.trim()) return result;
-
         const rawLines = rawText
-          .replace(/\r\n/g, '\n')
-          .split('\n')
+          .replace(/\\r\\n/g, '\\n')
+          .split('\\n')
           .map(l => l.trim())
           .filter(Boolean);
-
         for (const l of rawLines) {
-          const urlMatch = l.match(/https?:\/\/[^\s)]+/i);
+          const urlMatch = l.match(/https?:\\/\\/[^\\s)]+/);
           if (urlMatch && !result.sourceUrl) {
             result.sourceUrl = urlMatch[0];
           }
         }
-
-        const sectionHeaderIngredients = /^(?:ingredients?|what\s+you(?:'ll)?\s+need|for\s+the\s+ingredients?|shopping\s+list)\s*:?\s*$/i;
-        const sectionHeaderSteps = /^(?:instructions?|directions?|steps?|method|preparation|how\s+to\s+make(?:\s+it)?|cooking\s+instructions?)\s*:?\s*$/i;
-        const sectionHeaderNotes = /^(?:notes?|tips?|recipe\s+notes?|chef'?s?\s+notes?|cook'?s?\s+notes?|storage|nutrition(?:al)?\s*(?:info|information|facts)?)\s*:?\s*$/i;
-
+        const sectionHeaderIngredients = /^(?:ingredients?|what\\s+you(?:'ll)?\\s+need|for\\s+the\\s+ingredients?|shopping\\s+list)\\s\*:?\\s\*$/i;
+        const sectionHeaderSteps = /^(?:instructions?|directions?|steps?|method|preparation|how\\s+to\\s+make(?:\\s+it)?|cooking\\s+instructions?)\\s\*:?\\s\*$/i;
+        const sectionHeaderNotes = /^(?:notes?|tips?|recipe\\s+notes?|chef'?s?\\s+notes?|cook'?s?\\s+notes?|storage|nutrition(?:al)?\\s\*(?:info|information|facts)?)\\s\*:?\\s\*$/i;
         let currentSection = 'HEADER'; 
         const headerLines = [];
         const rawIngredientLines = [];
         const rawStepLines = [];
         const rawNoteLines = [];
-
         for (let i = 0; i < rawLines.length; i++) {
           const line = rawLines[i];
-
-          const prepMatch = line.match(/prep(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
-          const cookMatch = line.match(/cook(?:\s*time)?\s*:\s*([^|•,\n]+)/i);
-          const servMatch = line.match(/(?:servings?|serves|yield|makes)\s*:\s*(\d+)/i) ||
-                            line.match(/^(?:serves|makes)\s+(\d+)\b/i);
-
+          const prepMatch = line.match(/prep(?:\\s\*time)?\\s\*:\\s\*([^|•,\\n]+)/i);
+          const cookMatch = line.match(/cook(?:\\s\*time)?\\s\*:\\s\*([^|•,\\n]+)/i);
+          const servMatch = line.match(/(?:servings?|serves|yield|makes)\\s\*:\\s\*(\\d+)/i) ||
+                            line.match(/^(?:serves|makes)\\s+(\\d+)\\b/i);
           let isMetaLine = false;
           if (prepMatch) {
             const m = parseDurationToMinutes(prepMatch[1]);
@@ -1648,23 +1505,21 @@
             result.servings = parseInt(servMatch[1], 10);
             isMetaLine = true;
           }
-
-          if (/^prep(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
+          if (/^prep(?:\\s\*time)?\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
             const m = parseDurationToMinutes(rawLines[i + 1]);
             if (m !== null) { result.prepMins = m; i++; continue; }
           }
-          if (/^cook(?:\s*time)?\s*:?$/i.test(line) && i + 1 < rawLines.length) {
+          if (/^cook(?:\\s\*time)?\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
             const m = parseDurationToMinutes(rawLines[i + 1]);
             if (m !== null) { result.cookMins = m; i++; continue; }
           }
-          if (/^(?:servings?|yield)\s*:?$/i.test(line) && i + 1 < rawLines.length) {
-            const sMatch = rawLines[i + 1].match(/(\d+)/);
+          if (/^(?:servings?|yield)\\s\*:?$/i.test(line) && i + 1 < rawLines.length) {
+            const sMatch = rawLines[i + 1].match(/(\\d+)/);
             if (sMatch) { result.servings = parseInt(sMatch[1], 10); i++; continue; }
           }
-          if (/^(?:total\s*time|course|cuisine|keyword|author|calories)\s*:/i.test(line)) {
+          if (/^(?:total\\s\*time|course|cuisine|keyword|author|calories)\\s\*:/i.test(line)) {
             isMetaLine = true;
           }
-
           if (sectionHeaderIngredients.test(line)) {
             currentSection = 'INGREDIENTS';
             continue;
@@ -1677,13 +1532,11 @@
             currentSection = 'NOTES';
             continue;
           }
-
           if (isMetaLine) continue;
-          if (/^https?:\/\/\S+$/i.test(line)) continue;
-          if (/^(?:print\s+recipe|pin\s+recipe|jump\s+to\s+recipe|save\s+recipe|rate\s+this\s+recipe|★★★★★|☆☆☆☆☆)$/i.test(line)) {
+          if (/^https?:\\/\\/\\S+$/i.test(line)) continue;
+          if (/^(?:print\\s+recipe|pin\\s+recipe|jump\\s+to\\s+recipe|save\\s+recipe|rate\\s+this\\s+recipe|★★★★★|☆☆☆☆☆)$/i.test(line)) {
             continue;
           }
-
           if (currentSection === 'INGREDIENTS') {
             rawIngredientLines.push(line);
           } else if (currentSection === 'STEPS') {
@@ -1694,12 +1547,11 @@
             headerLines.push(line);
           }
         }
-
         if (rawIngredientLines.length === 0 && rawStepLines.length === 0 && headerLines.length > 0) {
           let passedIngredients = false;
           headerLines.forEach((line, idx) => {
             if (idx === 0 && !looksLikeIngredientLine(line) && line.length < 90) {
-              result.title = line.replace(/^#+\s*/, '').trim();
+              result.title = line.replace(/^#+\\s\*/, '').trim();
               return;
             }
             if (!passedIngredients && looksLikeIngredientLine(line)) {
@@ -1715,16 +1567,15 @@
           });
         } else {
           if (headerLines.length > 0) {
-            result.title = headerLines[0].replace(/^#+\s*/, '').trim();
+            result.title = headerLines[0].replace(/^#+\\s\*/, '').trim();
             if (headerLines.length > 1) {
               result.story = headerLines.slice(1).join(' ').trim();
             }
           }
         }
-
         rawIngredientLines.forEach(line => {
-          if (/^(?:for\s+the\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
-          if (rawStepLines.length === 0 && /^\d+[.)]\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
+          if (/^(?:for\\s+the\\s+[^:]+|[^0-9]{2,30}):$/i.test(line)) return;
+          if (rawStepLines.length === 0 && /^\\d+[.)]\\s+[A-Z]/.test(line) && !looksLikeIngredientLine(line)) {
             rawStepLines.push(line);
             return;
           }
@@ -1733,21 +1584,18 @@
             result.ingredients.push(parsedIng);
           }
         });
-
         for (let i = 0; i < rawStepLines.length; i++) {
           let line = rawStepLines[i].trim();
-          if (/^step\s*\d+\s*:?$/i.test(line)) continue;
-
-          line = line.replace(/^(?:step\s*\d+\s*[:.\-–—)]\s*|\d+\s*[.)\-–—:]\s*|[•‣⁃▪▫◦*+\-–—]\s*)/i, '').trim();
+          if (/^step\\s\*\\d+\\s\*:?$/i.test(line)) continue;
+          line = line.replace(/^(?:step\\s\*\\d+\\s\*[:.\\-–—)]\\s\*|\\d+\\s\*[.)\\-–—:]\\s\*|[•‣⁃▪▫◦\*+\\-–—]\\s\*)/i, '').trim();
           if (!line) continue;
-
           let tip = '';
-          const inlineTipMatch = line.match(/\s*(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+          const inlineTipMatch = line.match(/\\s\*(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i);
           if (inlineTipMatch && inlineTipMatch.index > 10) {
             tip = inlineTipMatch[1].trim();
             line = line.slice(0, inlineTipMatch.index).trim();
-          } else if (i + 1 < rawStepLines.length && /^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i.test(rawStepLines[i + 1])) {
-            const nextTipMatch = rawStepLines[i + 1].match(/^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+          } else if (i + 1 < rawStepLines.length && /^(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i.test(rawStepLines[i + 1])) {
+            const nextTipMatch = rawStepLines[i + 1].match(/^(?:💡\\s\*)?(?:chef'?s?\\s\*tip|kitchen\\s\*tip|pro\\s\*tip|tip|note)\\s\*:\\s\*(.+)$/i);
             if (nextTipMatch) {
               tip = nextTipMatch[1].trim();
               i++;
@@ -1755,10 +1603,9 @@
           }
           result.steps.push({ instruction: line, tip });
         }
-
         if (rawNoteLines.length > 0 && result.steps.length > 0) {
           const combinedNotes = rawNoteLines
-            .map(n => n.replace(/^[•*-]\s*/, '').trim())
+            .map(n => n.replace(/^[•\*-]\\s\*/, '').trim())
             .filter(Boolean)
             .join(' ');
           const lastStep = result.steps[result.steps.length - 1];
@@ -1766,7 +1613,6 @@
             lastStep.tip = combinedNotes;
           }
         }
-
         return result;
       }
 
@@ -1774,14 +1620,12 @@
       function loadState() {
         db.collection("recipes").onSnapshot((snapshot) => {
           recipes = [];
-          
           if (snapshot.empty) {
             DEFAULT_RECIPES.forEach(dr => {
               db.collection("recipes").add({ ...dr, updatedAt: Date.now() });
             });
             return;
           }
-
           snapshot.forEach((doc) => {
             const data = doc.data();
             recipes.push({
@@ -1790,7 +1634,6 @@
               mealType: normalizeMealType(data.mealType || data.timeOfDay)
             });
           });
-
           renderAll();
         }, (error) => {
           console.error("Firestore loading error: ", error);
@@ -1818,10 +1661,8 @@
         const existingMealTypes = new Set(recipes.map(r => normalizeMealType(r.mealType || r.timeOfDay)).filter(Boolean));
         const extraMealTypes = Array.from(existingMealTypes).filter(m => !MEAL_TYPES_ORDER.includes(m)).sort();
         const mealTypeList = ['ALL', ...MEAL_TYPES_ORDER, ...extraMealTypes];
-
         const origins = ['ALL', ...new Set(recipes.map(r => r.origin).filter(Boolean))].sort((a, b) => a === 'ALL' ? -1 : b === 'ALL' ? 1 : a.localeCompare(b));
         const courses = ['ALL', ...new Set(recipes.map(r => r.course).filter(Boolean))];
-
         const allTagsSet = new Set();
         recipes.forEach(r => {
           (r.tags || []).forEach(t => {
@@ -1834,17 +1675,14 @@
           activeFilters.mealType = val;
           renderAll();
         });
-
         buildChipGroup('filterOrigin', origins, activeFilters.origin, (val) => {
           activeFilters.origin = val;
           renderAll();
         });
-
         buildChipGroup('filterCourse', courses, activeFilters.course, (val) => {
           activeFilters.course = val;
           renderAll();
         });
-
         buildChipGroup('filterTags', tags, activeFilters.tag, (val) => {
           activeFilters.tag = val;
           renderAll();
@@ -1852,7 +1690,6 @@
 
         const favChip = document.getElementById('chipFavoritesOnly');
         favChip.classList.toggle('active', activeFilters.favoritesOnly);
-
         const quickChip = document.getElementById('chipQuickMeals');
         quickChip.classList.toggle('active', activeFilters.quickOnly);
       }
@@ -1871,7 +1708,6 @@
 
       function getFilteredRecipes() {
         const q = activeFilters.search.trim().toLowerCase();
-
         const filtered = recipes.filter(r => {
           const itemMealType = normalizeMealType(r.mealType || r.timeOfDay);
           if (activeFilters.mealType !== 'ALL' && itemMealType !== activeFilters.mealType) return false;
@@ -1879,10 +1715,8 @@
           if (activeFilters.course !== 'ALL' && r.course !== activeFilters.course) return false;
           if (activeFilters.tag !== 'ALL' && !(r.tags || []).includes(activeFilters.tag)) return false;
           if (activeFilters.favoritesOnly && !r.favorite) return false;
-
           const totalTime = (Number(r.prepMins) || 0) + (Number(r.cookMins) || 0);
           if (activeFilters.quickOnly && totalTime > 30) return false;
-
           if (q) {
             const haystack = [
               r.title,
@@ -1894,10 +1728,8 @@
               ...(r.tags || []),
               ...(r.ingredients || []).map(i => i.item + ' ' + (i.note || ''))
             ].join(' ').toLowerCase();
-
             if (!haystack.includes(q)) return false;
           }
-
           return true;
         });
 
@@ -1927,7 +1759,6 @@
               return (a.title || '').localeCompare(b.title || '');
           }
         });
-
         return filtered;
       }
 
@@ -1935,19 +1766,18 @@
         const grid = document.getElementById('recipeGrid');
         const countEl = document.getElementById('resultsCountText');
         const list = getFilteredRecipes();
-
-        countEl.textContent = `Showing ${list.length} of ${recipes.length} family recipe${recipes.length === 1 ? '' : 's'}`;
+        countEl.textContent = \`Showing ${list.length} of ${recipes.length} family recipe${recipes.length === 1 ? '' : 's'}\`;
         grid.innerHTML = '';
 
         if (list.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty-state';
           empty.style.gridColumn = '1 / -1';
-          empty.innerHTML = `
+          empty.innerHTML = \`
             <h3>No recipes match your current filters</h3>
             <p>Try clearing your filters or creating a new family classic recipe.</p>
             <button type="button" class="btn btn-primary" id="btnEmptyReset">Reset All Filters</button>
-          `;
+          \`;
           grid.appendChild(empty);
           const resetBtn = document.getElementById('btnEmptyReset');
           if (resetBtn) {
@@ -1961,8 +1791,7 @@
           card.className = 'recipe-card';
           const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
           const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
-
-          card.innerHTML = `
+          card.innerHTML = \`
             <div class="card-banner"></div>
             <div class="card-body">
               <div class="card-badges">
@@ -1979,18 +1808,15 @@
                 </button>
               </div>
             </div>
-          `;
-
+          \`;
           const favBtn = card.querySelector('.favorite-btn');
           favBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             db.collection("recipes").doc(recipe.id).update({ favorite: !recipe.favorite });
           });
-
           card.addEventListener('click', () => {
             openRecipeDetail(recipe.id);
           });
-
           grid.appendChild(card);
         });
       }
@@ -2025,37 +1851,32 @@
       function renderRecipeDetailContent(recipe) {
         document.getElementById('detailModalTitle').textContent = recipe.title;
         const body = document.getElementById('detailModalBody');
-
         const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
         const scaledServings = Math.max(1, Math.round((Number(recipe.servings) || 4) * currentScaleMultiplier));
         const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
-
-        const tagsHtml = (recipe.tags || []).map(t => `<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>`).join(' ');
-
+        const tagsHtml = (recipe.tags || []).map(t => \`<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>\`).join(' ');
         let storyHtml = '';
         if (recipe.story && recipe.story.trim()) {
-          storyHtml = `<div class="detail-story">“${escapeHtml(recipe.story)}”</div>`;
+          storyHtml = \`<div class="detail-story">“${escapeHtml(recipe.story)}”</div>\`;
         }
-
         let adjustmentsHtml = '';
         if (recipe.myAdjustments && recipe.myAdjustments.trim()) {
-          adjustmentsHtml = `
+          adjustmentsHtml = \`
             <div class="family-notes-box">
               <h4>👩‍🍳 How I Actually Cook It (Family Modifications)</h4>
               <p>${escapeHtml(recipe.myAdjustments)}</p>
-              ${recipe.sourceUrl ? `<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>` : ''}
+              ${recipe.sourceUrl ? \`<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>\` : ''}
             </div>
-          `;
+          \`;
         } else if (recipe.sourceUrl) {
-          adjustmentsHtml = `
+          adjustmentsHtml = \`
             <div class="family-notes-box">
               <h4>🔗 Reference Link</h4>
               <p style="font-size:0.85rem;"><a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>
             </div>
-          `;
+          \`;
         }
-
-        body.innerHTML = `
+        body.innerHTML = \`
           <div class="detail-header">
             <div class="card-badges" style="margin-bottom:0.5rem;">
               <span class="badge badge-meal">${escapeHtml(currentMeal)}</span>
@@ -2064,9 +1885,7 @@
             </div>
             <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">${tagsHtml}</div>
           </div>
-
           ${storyHtml}
-
           <div class="detail-meta-bar">
             <div class="meta-item">
               <span class="meta-label">Prep Time</span>
@@ -2085,7 +1904,6 @@
               <span class="meta-value">${scaledServings} servings</span>
             </div>
           </div>
-
           <div class="detail-columns">
             <div>
               <div class="section-heading">
@@ -2099,7 +1917,6 @@
               </div>
               <ul class="ingredient-list" id="detailIngredientList"></ul>
             </div>
-
             <div>
               <div class="section-heading">
                 <span>Step-by-Step Directions</span>
@@ -2108,48 +1925,44 @@
               <ol class="step-list" id="detailStepList"></ol>
             </div>
           </div>
-
           ${adjustmentsHtml}
-        `;
-
+        \`;
         body.querySelectorAll('.scale-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             currentScaleMultiplier = parseFloat(btn.getAttribute('data-scale')) || 1;
             renderRecipeDetailContent(recipe);
           });
         });
-
         const ingList = document.getElementById('detailIngredientList');
         (recipe.ingredients || []).forEach((ing) => {
           const li = document.createElement('li');
           li.className = 'ingredient-item';
           const scaledAmt = formatScaledAmount(ing.amount, currentScaleMultiplier);
-          const notePart = ing.note ? ` <em style="color:var(--text-muted);">(${escapeHtml(ing.note)})</em>` : '';
-          li.innerHTML = `
+          const notePart = ing.note ? \` <em style="color:var(--text-muted);">(${escapeHtml(ing.note)})</em>\` : '';
+          li.innerHTML = \`
             <input type="checkbox">
             <span><strong>${escapeHtml(scaledAmt)} ${escapeHtml(ing.unit || '')}</strong> ${escapeHtml(ing.item || '')}${notePart}</span>
-          `;
+          \`;
           const checkbox = li.querySelector('input[type="checkbox"]');
           checkbox.addEventListener('change', () => {
             li.classList.toggle('checked', checkbox.checked);
           });
           ingList.appendChild(li);
         });
-
         const stepList = document.getElementById('detailStepList');
         (recipe.steps || []).forEach((st, idx) => {
           const li = document.createElement('li');
           li.className = 'step-item';
           const tipHtml = st.tip && st.tip.trim()
-            ? `<div class="step-tip">💡 <strong>Parent / Kitchen Tip:</strong> ${escapeHtml(st.tip)}</div>`
+            ? \`<div class="step-tip">💡 <strong>Parent / Kitchen Tip:</strong> ${escapeHtml(st.tip)}</div>\`
             : '';
-          li.innerHTML = `
+          li.innerHTML = \`
             <div class="step-number" title="Mark step done">${idx + 1}</div>
             <div class="step-content">
               <div class="step-text">${escapeHtml(st.instruction)}</div>
               ${tipHtml}
             </div>
-          `;
+          \`;
           li.addEventListener('click', () => {
             li.classList.toggle('completed');
           });
@@ -2161,13 +1974,13 @@
         const container = document.getElementById('ingredientRowsContainer');
         const row = document.createElement('div');
         row.className = 'dynamic-row';
-        row.innerHTML = `
+        row.innerHTML = \`
           <input type="text" class="text-input ing-amount" placeholder="Qty (1 1/2)" value="${escapeHtml(data.amount)}">
           <input type="text" class="text-input ing-unit" placeholder="Unit (cup)" value="${escapeHtml(data.unit)}">
-          <input type="text" class="text-input ing-item" placeholder="Ingredient name *" value="${escapeHtml(data.item)}">
+          <input type="text" class="text-input ing-item" placeholder="Ingredient name \*" value="${escapeHtml(data.item)}">
           <input type="text" class="text-input ing-note" placeholder="Prep note (diced)" value="${escapeHtml(data.note)}">
           <button type="button" class="btn btn-light btn-sm btn-remove-row" title="Remove Ingredient">✕</button>
-        `;
+        \`;
         row.querySelector('.btn-remove-row').addEventListener('click', () => {
           row.remove();
         });
@@ -2179,14 +1992,14 @@
         const row = document.createElement('div');
         row.className = 'dynamic-step-row';
         const stepIndex = container.children.length + 1;
-        row.innerHTML = `
+        row.innerHTML = \`
           <div class="step-number step-badge-num" style="cursor:default;">${stepIndex}</div>
           <div style="display:flex; flex-direction:column; gap:0.4rem;">
             <textarea class="textarea-input step-instruction" rows="2" placeholder="Step-by-step direction...">${escapeHtml(data.instruction)}</textarea>
-            <input type="text" class="text-input step-tip-input" placeholder="💡 Optional tip for the kids (e.g. Watch closely so the garlic doesn't burn)" value="${escapeHtml(data.tip)}">
+            <input type="text" class="text-input step-tip-input" placeholder="💡 Optional tip (e.g. Watch closely so the garlic doesn't burn)" value="${escapeHtml(data.tip)}">
           </div>
           <button type="button" class="btn btn-light btn-sm btn-remove-step" title="Remove Step">✕</button>
-        `;
+        \`;
         row.querySelector('.btn-remove-step').addEventListener('click', () => {
           row.remove();
           renumberStepEditorRows();
@@ -2214,16 +2027,13 @@
         const banner = document.getElementById('editorValidationBanner');
         banner.className = 'status-banner';
         banner.textContent = '';
-
         document.getElementById('rawRecipePasteInput').value = '';
         setImporterExpanded(expandImporter);
-
         const heading = document.getElementById('editorModalHeading');
         const ingContainer = document.getElementById('ingredientRowsContainer');
         const stepContainer = document.getElementById('stepRowsContainer');
         ingContainer.innerHTML = '';
         stepContainer.innerHTML = '';
-
         if (recipeToEdit) {
           currentEditingRecipeId = recipeToEdit.id || null;
           heading.textContent = 'Edit Family Recipe';
@@ -2238,12 +2048,10 @@
           document.getElementById('editStory').value = recipeToEdit.story || '';
           document.getElementById('editMyAdjustments').value = recipeToEdit.myAdjustments || '';
           document.getElementById('editSourceUrl').value = recipeToEdit.sourceUrl || '';
-
           const ings = recipeToEdit.ingredients && recipeToEdit.ingredients.length
             ? recipeToEdit.ingredients
             : [{ amount: '', unit: '', item: '', note: '' }];
           ings.forEach(i => addIngredientEditorRow(i));
-
           const steps = recipeToEdit.steps && recipeToEdit.steps.length
             ? recipeToEdit.steps
             : [{ instruction: '', tip: '' }];
@@ -2262,14 +2070,12 @@
           document.getElementById('editStory').value = '';
           document.getElementById('editMyAdjustments').value = '';
           document.getElementById('editSourceUrl').value = '';
-
           addIngredientEditorRow();
           addIngredientEditorRow();
           addIngredientEditorRow();
           addStepEditorRow();
           addStepEditorRow();
         }
-
         document.getElementById('editorModal').classList.add('open');
         if (expandImporter) {
           setTimeout(() => {
@@ -2281,26 +2087,21 @@
       function handleRunRecipeParser() {
         const rawText = document.getElementById('rawRecipePasteInput').value;
         const banner = document.getElementById('editorValidationBanner');
-
         if (!rawText || !rawText.trim()) {
           banner.className = 'status-banner error';
           banner.textContent = 'Please paste a copied recipe into the importer text box first.';
           return;
         }
-
         const parsed = parseCopiedRecipeText(rawText);
-
         if (parsed.ingredients.length === 0 && parsed.steps.length === 0) {
           banner.className = 'status-banner error';
           banner.textContent = 'Could not detect ingredients or instructions. Try including "Ingredients:" and "Instructions:" headings in your pasted text.';
           return;
         }
-
         const titleInput = document.getElementById('editTitle');
         if (parsed.title && !titleInput.value.trim()) {
           titleInput.value = parsed.title;
         }
-
         if (parsed.prepMins !== null) {
           document.getElementById('editPrepMins').value = parsed.prepMins;
         }
@@ -2316,19 +2117,16 @@
         if (parsed.story && !document.getElementById('editStory').value.trim()) {
           document.getElementById('editStory').value = parsed.story;
         }
-
         if (parsed.ingredients.length > 0) {
           const ingContainer = document.getElementById('ingredientRowsContainer');
           ingContainer.innerHTML = '';
           parsed.ingredients.forEach(ing => addIngredientEditorRow(ing));
         }
-
         if (parsed.steps.length > 0) {
           const stepContainer = document.getElementById('stepRowsContainer');
           stepContainer.innerHTML = '';
           parsed.steps.forEach(st => addStepEditorRow(st));
         }
-
         setImporterExpanded(false);
         banner.className = 'status-banner success';
         banner.textContent = `✨ Imported ${parsed.ingredients.length} ingredient${parsed.ingredients.length === 1 ? '' : 's'} and ${parsed.steps.length} instruction step${parsed.steps.length === 1 ? '' : 's'}! Review below and click Save Recipe.`;
@@ -2338,13 +2136,11 @@
         const title = document.getElementById('editTitle').value.trim();
         const origin = document.getElementById('editOrigin').value.trim() || '';
         const banner = document.getElementById('editorValidationBanner');
-
         if (!title) {
           banner.className = 'status-banner error';
           banner.textContent = 'Please provide a Recipe Name before saving.';
           return;
         }
-
         const ingredients = [];
         document.querySelectorAll('#ingredientRowsContainer .dynamic-row').forEach(row => {
           const amount = row.querySelector('.ing-amount').value.trim();
@@ -2355,7 +2151,6 @@
             ingredients.push({ amount, unit, item: item || 'Ingredient', note });
           }
         });
-
         const steps = [];
         document.querySelectorAll('#stepRowsContainer .dynamic-step-row').forEach(row => {
           const instruction = row.querySelector('.step-instruction').value.trim();
@@ -2364,25 +2159,20 @@
             steps.push({ instruction, tip });
           }
         });
-
         if (ingredients.length === 0 || steps.length === 0) {
           banner.className = 'status-banner error';
           banner.textContent = 'Please add at least one ingredient and one direction step.';
           return;
         }
-
         const tagsRaw = document.getElementById('editTags').value;
         const tags = tagsRaw
           .split(',')
           .map(t => t.trim())
           .filter(Boolean);
-
         const existingRecipe = currentEditingRecipeId
           ? recipes.find(r => r.id === currentEditingRecipeId)
           : null;
-
         const selectedMealType = document.getElementById('editMealType').value;
-
         const recipeObj = {
           title,
           passedDownBy: '',
@@ -2426,60 +2216,51 @@
 
       // Bind UI Events
       function bindEvents() {
-        // Passcode Submission events
         document.getElementById('btnSubmitPasscode').addEventListener('click', handlePasscodeSubmit);
-        document.getElementById('familyPasscodeInput').addEventListener('keydown', (e) => {
+        document.getElementById('familyPasswordInput').addEventListener('keydown', (e) => {
           if (e.key === 'Enter') handlePasscodeSubmit();
         });
-
+        document.getElementById('btnSignOut').addEventListener('click', handleSignOut);
+        
         document.getElementById('searchInput').addEventListener('input', (e) => {
           activeFilters.search = e.target.value;
           renderRecipeGrid();
         });
-
         document.getElementById('sortSelect').addEventListener('change', (e) => {
           activeFilters.sortBy = e.target.value;
           renderRecipeGrid();
         });
-
         document.getElementById('chipFavoritesOnly').addEventListener('click', () => {
           activeFilters.favoritesOnly = !activeFilters.favoritesOnly;
           renderAll();
         });
-
         document.getElementById('chipQuickMeals').addEventListener('click', () => {
           activeFilters.quickOnly = !activeFilters.quickOnly;
           renderAll();
         });
-
         document.getElementById('btnResetFilters').addEventListener('click', resetAllFilters);
-
+        
         document.getElementById('btnNewRecipe').addEventListener('click', () => {
           openEditorModal(null, false);
         });
-
         document.getElementById('btnQuickImportRecipe').addEventListener('click', () => {
           openEditorModal(null, true);
         });
-
         document.getElementById('importBoxToggle').addEventListener('click', () => {
           const box = document.getElementById('recipeImportBox');
           setImporterExpanded(!box.classList.contains('expanded'));
         });
-
         document.getElementById('btnClearPasteInput').addEventListener('click', () => {
           document.getElementById('rawRecipePasteInput').value = '';
           document.getElementById('rawRecipePasteInput').focus();
         });
-
         document.getElementById('btnRunRecipeParser').addEventListener('click', handleRunRecipeParser);
-
+        
         document.getElementById('btnCustomizeBook').addEventListener('click', () => {
           document.getElementById('bookTitleInput').value = cookbookMeta.title;
           document.getElementById('bookSubtitleInput').value = cookbookMeta.subtitle;
           document.getElementById('dedicationModal').classList.add('open');
         });
-
         document.getElementById('btnExportBook').addEventListener('click', () => {
           const payload = {
             cookbookMeta,
@@ -2501,7 +2282,6 @@
         document.getElementById('btnTriggerRestore').addEventListener('click', () => {
           fileInput.click();
         });
-
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files && e.target.files[0];
           if (!file) return;
@@ -2543,11 +2323,9 @@
         document.getElementById('btnCloseDetailModal').addEventListener('click', () => {
           document.getElementById('detailModal').classList.remove('open');
         });
-
         document.getElementById('btnPrintRecipe').addEventListener('click', () => {
           window.print();
         });
-
         document.getElementById('btnEditCurrentRecipe').addEventListener('click', () => {
           const recipe = recipes.find(r => r.id === currentViewingRecipeId);
           if (recipe) {
@@ -2556,19 +2334,10 @@
           }
         });
 
-        // 🔒 Protected Deletion (Requires Admin PIN verification)
+        // 🔒 Protected Deletion (Allows any authorized logged-in family user to delete)
         document.getElementById('btnDeleteCurrentRecipe').addEventListener('click', () => {
           const recipe = recipes.find(r => r.id === currentViewingRecipeId);
           if (!recipe) return;
-
-          const enteredPin = prompt(`ADMIN VERIFICATION REQUIRED:\nEnter Admin PIN to delete "${recipe.title}":`);
-          if (enteredPin === null) return; // User cancelled
-
-          if (enteredPin !== ADMIN_DELETE_PIN) {
-            alert("❌ Unauthorized: Incorrect Admin PIN. Only the cookbook administrator can delete recipes.");
-            return;
-          }
-
           if (confirm(`Are you completely sure you want to permanently delete "${recipe.title}"?`)) {
             db.collection("recipes").doc(currentViewingRecipeId).delete()
               .then(() => {
@@ -2581,25 +2350,20 @@
         document.getElementById('btnCloseEditorModal').addEventListener('click', () => {
           document.getElementById('editorModal').classList.remove('open');
         });
-
         document.getElementById('btnCancelEditorFooter').addEventListener('click', () => {
           document.getElementById('editorModal').classList.remove('open');
         });
-
         document.getElementById('btnAddIngredientRow').addEventListener('click', () => {
           addIngredientEditorRow();
         });
-
         document.getElementById('btnAddStepRow').addEventListener('click', () => {
           addStepEditorRow();
         });
-
         document.getElementById('btnSaveRecipe').addEventListener('click', saveRecipeFromEditor);
-
+        
         document.getElementById('btnCloseDedicationModal').addEventListener('click', () => {
           document.getElementById('dedicationModal').classList.remove('open');
         });
-
         document.getElementById('btnSaveDedication').addEventListener('click', () => {
           const newTitle = document.getElementById('bookTitleInput').value.trim();
           const newSub = document.getElementById('bookSubtitleInput').value.trim();
@@ -2618,9 +2382,7 @@
         });
       }
 
-      // Initialize Application
-      checkAccessGate();
-      loadState();
+      // Initialize Application Events
       bindEvents();
     })();
   </script>
