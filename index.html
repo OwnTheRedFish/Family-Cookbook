@@ -917,112 +917,6 @@
         max-width: 100%;
       }
     }
-
-    /* 2026 visual refresh: editorial kitchen journal */
-    :root {
-      --bg-paper: #f4f1e9;
-      --bg-card: #fffefa;
-      --bg-sidebar: #eeece2;
-      --bg-accent: #e4e5d9;
-      --text-main: #27352d;
-      --text-muted: #69766b;
-      --brand-primary: #496b55;
-      --brand-primary-hover: #365340;
-      --brand-secondary: #a85f43;
-      --brand-gold: #c6a56a;
-      --border-color: #d9d8ca;
-      --shadow-sm: 0 5px 18px rgba(39,53,45,.055);
-      --shadow-md: 0 14px 34px rgba(39,53,45,.11);
-      --radius-sm: 9px;
-      --radius-md: 16px;
-    }
-    body { background: var(--bg-paper); }
-    header {
-      background: linear-gradient(118deg, #263e32 0%, #385b45 58%, #506d55 100%);
-      color: #fff;
-      padding: 2.15rem 2rem 1.8rem;
-      border: 0;
-      text-align: left;
-      overflow: visible;
-    }
-    header::after { width: 100%; max-width: 1360px; height: 1px; background: rgba(230,211,166,.55); margin: 1.4rem auto 0; }
-    .header-inner { max-width: 1360px; flex-direction: row; justify-content: space-between; align-items: center; gap: 2rem; }
-    .brand-title h1 { color: #fffdf5; font-size: clamp(2rem, 3.4vw, 3rem); letter-spacing: -.6px; line-height: 1.08; }
-    .brand-subtitle { color: #dce5d8; font-size: 1rem; letter-spacing: .2px; }
-    .header-actions { justify-content: flex-end; gap: .65rem; }
-    .user-greeting { color: #e2e9df; max-width: 220px; overflow-wrap: anywhere; }
-    .header-actions .btn { border-radius: 999px; padding: .72rem 1.1rem; text-transform: none; letter-spacing: .1px; font-size: .83rem; }
-    .header-actions .btn-primary { background: #f4f0e4; color: #304a39; border-color: #f4f0e4; }
-    .header-actions .btn-primary:hover { background: #e7dfcb; border-color: #e7dfcb; }
-    .header-actions .btn-secondary { background: #b97858; border-color: #b97858; color: white; }
-    .header-actions .btn-light, .header-actions .btn-outline { background: rgba(255,255,255,.09); color: #fff; border-color: rgba(255,255,255,.35); }
-    .header-actions .btn-light:hover, .header-actions .btn-outline:hover { background: rgba(255,255,255,.17); }
-    .header-tools { position: relative; }
-    .header-tools summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: .55rem; padding: .72rem 1rem; min-height: 42px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; color: #fff; background: rgba(255,255,255,.09); font-size: .83rem; font-weight: 600; white-space: nowrap; }
-    .header-tools summary::-webkit-details-marker { display: none; }
-    .header-tools[open] summary { background: rgba(255,255,255,.19); }
-    .header-tools-menu { position: absolute; z-index: 50; top: calc(100% + 10px); right: 0; min-width: 220px; padding: .55rem; display: grid; gap: .35rem; background: #fffefa; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 16px 36px rgba(20,35,26,.2); }
-    .header-tools-menu .btn { width: 100%; justify-content: flex-start; background: transparent; color: var(--text-main); border: 0; border-radius: 8px; text-align: left; }
-    .header-tools-menu .btn:hover { background: #edf0e8; }
-    .app-container { max-width: 1360px; grid-template-columns: 278px minmax(0,1fr); gap: 1.75rem; padding: 2rem 1.5rem 3rem; }
-    .sidebar { background: #ebece2; border: 1px solid #d8ddcf; border-radius: 18px; padding: 1.35rem; top: 1.25rem; box-shadow: var(--shadow-sm); }
-    .sidebar-section { margin-bottom: 1.25rem; padding-bottom: 1.15rem; }
-    .sidebar-title { font-family: var(--font-sans); font-size: .82rem; font-weight: 750; text-transform: uppercase; letter-spacing: .09em; color: #536657; }
-    .sidebar-title .btn { border-radius: 999px; text-transform: none; letter-spacing: 0; }
-    .search-input, .select-input, .text-input, .textarea-input { border-radius: 10px; border-color: #d4d8ce; background: #fffefa; padding: .8rem .9rem; }
-    .search-input:focus, .select-input:focus, .text-input:focus, .textarea-input:focus { outline: 2px solid rgba(73,107,85,.18); border-color: var(--brand-primary); }
-    .chip { border-radius: 999px; padding: .42rem .78rem; background: #fafaf5; border-color: #d9ded3; }
-    .chip.active { background: #496b55; border-color: #496b55; }
-    .toolbar { margin-bottom: 1.35rem; padding: 0 0 1.15rem; border-bottom: 1px solid #d9d8ca; }
-    .results-count { font-family: var(--font-serif); font-size: 1.65rem; color: #2e4436; }
-    .sort-controls { gap: .6rem; }
-    .sort-controls label { font-weight: 600; }
-    .sort-controls .select-input { border-radius: 999px; padding: .65rem 2.1rem .65rem .9rem; }
-    .recipe-grid { grid-template-columns: repeat(auto-fill, minmax(265px,1fr)); gap: 1.2rem; }
-    .recipe-card { border: 1px solid #e0e0d6; border-radius: 16px; box-shadow: 0 4px 14px rgba(39,53,45,.045); }
-    .recipe-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(39,53,45,.11); border-color: #c4d0c0; }
-    .card-banner { height: 5px; background: linear-gradient(90deg,#496b55,#b9a06e); }
-    .card-body { padding: 1.35rem; }
-    .badge { border-radius: 999px; letter-spacing: .055em; padding: .28rem .62rem; }
-    .card-title { font-size: 1.45rem; line-height: 1.2; color: #2e4436; }
-    .card-desc { line-height: 1.6; }
-    .card-meta { border-color: #ecebe3; }
-    .modal-panel { border-radius: 18px; border: 1px solid #d8d8cb; box-shadow: 0 24px 70px rgba(20,35,26,.22); }
-    .modal-header { background: #eef0e8; border-bottom: 1px solid #d9ded3; padding: 1.2rem 1.5rem; }
-    .modal-header h2 { color: #2e4436; }
-    .modal-body { padding: 1.5rem; }
-    .modal-footer { background: #f1f1e9; border-top: 1px solid #d9ded3; }
-    .modal-backdrop { backdrop-filter: blur(5px); background: rgba(24,36,28,.56); }
-    .btn { border-radius: 999px; text-transform: none; letter-spacing: .1px; }
-    .btn-primary { background: #496b55; border-color: #496b55; }
-    .btn-secondary { background: #a85f43; border-color: #a85f43; }
-    .btn-light { background: #edf0e8; border-color: #d7ddcf; }
-    .import-box { background: #f3f2e9; border: 1px solid #d9d8ca; border-radius: 14px; }
-    .import-box-header h3 { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; }
-    .gate-card { border-radius: 20px; box-shadow: 0 20px 60px rgba(39,53,45,.12); }
-    .gate-card h2 { color: #2e4436; }
-    @media (max-width: 920px) {
-      .header-inner { flex-direction: column; text-align: center; }
-      header { text-align: center; }
-      .header-actions { justify-content: center; }
-      .app-container { grid-template-columns: 1fr; }
-      .sidebar { position: static; }
-    }
-    @media (max-width: 640px) {
-      header { padding: 1.4rem 1rem 1.1rem; }
-      .header-inner { gap: 1rem; }
-      .header-actions { display: flex; flex-wrap: wrap; width: 100%; justify-content: center; }
-      .header-actions .user-greeting { flex: 0 0 100%; }
-      .header-actions .btn { width: auto; min-height: 42px; padding: .65rem .85rem; font-size: .78rem; }
-      .header-tools summary { min-height: 42px; padding: .65rem .85rem; font-size: .78rem; }
-      .header-tools-menu { right: 0; left: auto; }
-      .app-container { padding: 1rem .8rem 2rem; }
-      .sidebar { padding: 1rem; }
-      .recipe-grid { grid-template-columns: 1fr; gap: .85rem; }
-      .card-body { padding: 1.15rem; }
-      .modal-panel { border-radius: 0; }
-    }
-
   </style>
 </head>
 <body>
@@ -1064,17 +958,12 @@
       </div>
       <div class="header-actions">
         <span class="user-greeting" id="userGreetingText"></span>
-        <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Recipe</button>
-        <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">Paste &amp; Import</button>
-        <details class="header-tools">
-          <summary aria-label="Open cookbook tools">Cookbook Tools <span aria-hidden="true">⌄</span></summary>
-          <div class="header-tools-menu">
-            <button type="button" class="btn btn-outline" id="btnCustomizeBook">Cookbook Dedication</button>
-            <button type="button" class="btn btn-outline" id="btnExportBook">Download JSON Backup</button>
-            <button type="button" class="btn btn-outline" id="btnTriggerRestore">Restore from JSON</button>
-          </div>
-        </details>
-        <button type="button" class="btn btn-light" id="btnSignOut">Sign Out</button>
+        <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Family Recipe</button>
+        <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">📋 Paste &amp; Import Recipe</button>
+        <button type="button" class="btn btn-outline" id="btnCustomizeBook">✒️ Cookbook Dedication</button>
+        <button type="button" class="btn btn-outline" id="btnExportBook">💾 Backup JSON</button>
+        <button type="button" class="btn btn-outline" id="btnTriggerRestore">📂 Restore JSON</button>
+        <button type="button" class="btn btn-light" id="btnSignOut">🚪 Sign Out</button>
         <input type="file" id="fileRestoreInput" accept=".json" style="display:none">
       </div>
     </div>
@@ -2629,10 +2518,6 @@
         document.getElementById('btnRunRecipeParser').addEventListener('click', handleRunRecipeParser);
 
         // Dedication & Export
-        const headerTools = document.querySelector('.header-tools');
-        document.querySelectorAll('.header-tools-menu .btn').forEach(button => {
-          button.addEventListener('click', () => { headerTools.open = false; });
-        });
         document.getElementById('btnCustomizeBook').addEventListener('click', () => {
           document.getElementById('bookTitleInput').value = cookbookMeta.title;
           document.getElementById('bookSubtitleInput').value = cookbookMeta.subtitle;
