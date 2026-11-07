@@ -273,6 +273,17 @@
       border: 1px solid #bcf0da;
     }
 
+    .member-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border-color); }
+    .member-row:last-child { border-bottom:0; }
+    .member-email { font-weight:600; overflow-wrap:anywhere; }
+    .member-meta { color:var(--text-muted); font-size:.82rem; }
+    .member-actions { display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+    .member-status { display:inline-block; border-radius:999px; padding:.2rem .65rem; font-size:.75rem; background:var(--bg-accent); color:var(--text-main); }
+    .member-status.approved { background:#e6f2e8; color:#285c37; }
+    .member-status.pending { background:#fff3d8; color:#79530a; }
+    .member-status.revoked { background:#f8e7e7; color:#8b3030; }
+    @media (max-width:560px) { .member-row { align-items:flex-start; flex-direction:column; } .member-actions { width:100%; justify-content:flex-start; } }
+
     /* Quick Paste & Parse Importer Box */
     .import-box {
       background-color: #f7f3eb;
@@ -917,6 +928,112 @@
         max-width: 100%;
       }
     }
+
+    /* 2026 visual refresh: editorial kitchen journal */
+    :root {
+      --bg-paper: #f4f1e9;
+      --bg-card: #fffefa;
+      --bg-sidebar: #eeece2;
+      --bg-accent: #e4e5d9;
+      --text-main: #27352d;
+      --text-muted: #69766b;
+      --brand-primary: #496b55;
+      --brand-primary-hover: #365340;
+      --brand-secondary: #a85f43;
+      --brand-gold: #c6a56a;
+      --border-color: #d9d8ca;
+      --shadow-sm: 0 5px 18px rgba(39,53,45,.055);
+      --shadow-md: 0 14px 34px rgba(39,53,45,.11);
+      --radius-sm: 9px;
+      --radius-md: 16px;
+    }
+    body { background: var(--bg-paper); }
+    header {
+      background: linear-gradient(118deg, #263e32 0%, #385b45 58%, #506d55 100%);
+      color: #fff;
+      padding: 2.15rem 2rem 1.8rem;
+      border: 0;
+      text-align: left;
+      overflow: visible;
+    }
+    header::after { width: 100%; max-width: 1360px; height: 1px; background: rgba(230,211,166,.55); margin: 1.4rem auto 0; }
+    .header-inner { max-width: 1360px; flex-direction: row; justify-content: space-between; align-items: center; gap: 2rem; }
+    .brand-title h1 { color: #fffdf5; font-size: clamp(2rem, 3.4vw, 3rem); letter-spacing: -.6px; line-height: 1.08; }
+    .brand-subtitle { color: #dce5d8; font-size: 1rem; letter-spacing: .2px; }
+    .header-actions { justify-content: flex-end; gap: .65rem; }
+    .user-greeting { color: #e2e9df; max-width: 220px; overflow-wrap: anywhere; }
+    .header-actions .btn { border-radius: 999px; padding: .72rem 1.1rem; text-transform: none; letter-spacing: .1px; font-size: .83rem; }
+    .header-actions .btn-primary { background: #f4f0e4; color: #304a39; border-color: #f4f0e4; }
+    .header-actions .btn-primary:hover { background: #e7dfcb; border-color: #e7dfcb; }
+    .header-actions .btn-secondary { background: #b97858; border-color: #b97858; color: white; }
+    .header-actions .btn-light, .header-actions .btn-outline { background: rgba(255,255,255,.09); color: #fff; border-color: rgba(255,255,255,.35); }
+    .header-actions .btn-light:hover, .header-actions .btn-outline:hover { background: rgba(255,255,255,.17); }
+    .header-tools { position: relative; }
+    .header-tools summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: .55rem; padding: .72rem 1rem; min-height: 42px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; color: #fff; background: rgba(255,255,255,.09); font-size: .83rem; font-weight: 600; white-space: nowrap; }
+    .header-tools summary::-webkit-details-marker { display: none; }
+    .header-tools[open] summary { background: rgba(255,255,255,.19); }
+    .header-tools-menu { position: absolute; z-index: 50; top: calc(100% + 10px); right: 0; min-width: 220px; padding: .55rem; display: grid; gap: .35rem; background: #fffefa; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 16px 36px rgba(20,35,26,.2); }
+    .header-tools-menu .btn { width: 100%; justify-content: flex-start; background: transparent; color: var(--text-main); border: 0; border-radius: 8px; text-align: left; }
+    .header-tools-menu .btn:hover { background: #edf0e8; }
+    .app-container { max-width: 1360px; grid-template-columns: 278px minmax(0,1fr); gap: 1.75rem; padding: 2rem 1.5rem 3rem; }
+    .sidebar { background: #ebece2; border: 1px solid #d8ddcf; border-radius: 18px; padding: 1.35rem; top: 1.25rem; box-shadow: var(--shadow-sm); }
+    .sidebar-section { margin-bottom: 1.25rem; padding-bottom: 1.15rem; }
+    .sidebar-title { font-family: var(--font-sans); font-size: .82rem; font-weight: 750; text-transform: uppercase; letter-spacing: .09em; color: #536657; }
+    .sidebar-title .btn { border-radius: 999px; text-transform: none; letter-spacing: 0; }
+    .search-input, .select-input, .text-input, .textarea-input { border-radius: 10px; border-color: #d4d8ce; background: #fffefa; padding: .8rem .9rem; }
+    .search-input:focus, .select-input:focus, .text-input:focus, .textarea-input:focus { outline: 2px solid rgba(73,107,85,.18); border-color: var(--brand-primary); }
+    .chip { border-radius: 999px; padding: .42rem .78rem; background: #fafaf5; border-color: #d9ded3; }
+    .chip.active { background: #496b55; border-color: #496b55; }
+    .toolbar { margin-bottom: 1.35rem; padding: 0 0 1.15rem; border-bottom: 1px solid #d9d8ca; }
+    .results-count { font-family: var(--font-serif); font-size: 1.65rem; color: #2e4436; }
+    .sort-controls { gap: .6rem; }
+    .sort-controls label { font-weight: 600; }
+    .sort-controls .select-input { border-radius: 999px; padding: .65rem 2.1rem .65rem .9rem; }
+    .recipe-grid { grid-template-columns: repeat(auto-fill, minmax(265px,1fr)); gap: 1.2rem; }
+    .recipe-card { border: 1px solid #e0e0d6; border-radius: 16px; box-shadow: 0 4px 14px rgba(39,53,45,.045); }
+    .recipe-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(39,53,45,.11); border-color: #c4d0c0; }
+    .card-banner { height: 5px; background: linear-gradient(90deg,#496b55,#b9a06e); }
+    .card-body { padding: 1.35rem; }
+    .badge { border-radius: 999px; letter-spacing: .055em; padding: .28rem .62rem; }
+    .card-title { font-size: 1.45rem; line-height: 1.2; color: #2e4436; }
+    .card-desc { line-height: 1.6; }
+    .card-meta { border-color: #ecebe3; }
+    .modal-panel { border-radius: 18px; border: 1px solid #d8d8cb; box-shadow: 0 24px 70px rgba(20,35,26,.22); }
+    .modal-header { background: #eef0e8; border-bottom: 1px solid #d9ded3; padding: 1.2rem 1.5rem; }
+    .modal-header h2 { color: #2e4436; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { background: #f1f1e9; border-top: 1px solid #d9ded3; }
+    .modal-backdrop { backdrop-filter: blur(5px); background: rgba(24,36,28,.56); }
+    .btn { border-radius: 999px; text-transform: none; letter-spacing: .1px; }
+    .btn-primary { background: #496b55; border-color: #496b55; }
+    .btn-secondary { background: #a85f43; border-color: #a85f43; }
+    .btn-light { background: #edf0e8; border-color: #d7ddcf; }
+    .import-box { background: #f3f2e9; border: 1px solid #d9d8ca; border-radius: 14px; }
+    .import-box-header h3 { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; }
+    .gate-card { border-radius: 20px; box-shadow: 0 20px 60px rgba(39,53,45,.12); }
+    .gate-card h2 { color: #2e4436; }
+    @media (max-width: 920px) {
+      .header-inner { flex-direction: column; text-align: center; }
+      header { text-align: center; }
+      .header-actions { justify-content: center; }
+      .app-container { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+    @media (max-width: 640px) {
+      header { padding: 1.4rem 1rem 1.1rem; }
+      .header-inner { gap: 1rem; }
+      .header-actions { display: flex; flex-wrap: wrap; width: 100%; justify-content: center; }
+      .header-actions .user-greeting { flex: 0 0 100%; }
+      .header-actions .btn { width: auto; min-height: 42px; padding: .65rem .85rem; font-size: .78rem; }
+      .header-tools summary { min-height: 42px; padding: .65rem .85rem; font-size: .78rem; }
+      .header-tools-menu { right: 0; left: auto; }
+      .app-container { padding: 1rem .8rem 2rem; }
+      .sidebar { padding: 1rem; }
+      .recipe-grid { grid-template-columns: 1fr; gap: .85rem; }
+      .card-body { padding: 1.15rem; }
+      .modal-panel { border-radius: 0; }
+    }
+
   </style>
 </head>
 <body>
@@ -925,7 +1042,7 @@
   <div id="accessGateModal">
     <div class="gate-card">
       <h2>👪 Family Kitchen</h2>
-      <p>Sign in with your authorized family account to open the cookbook.</p>
+      <p>Sign in or create an account. New accounts require approval from the cookbook administrator.</p>
       <div id="gateErrorBanner" class="status-banner"></div>
 
       <!-- Option 1: Fast One-Click Google Sign-In -->
@@ -946,7 +1063,9 @@
         <input type="email" id="familyEmailInput" class="text-input" placeholder="Email address..." style="text-align: center; margin-bottom: 0.75rem;" autocomplete="username">
         <input type="password" id="familyPasswordInput" class="text-input" placeholder="Password..." style="text-align: center; margin-bottom: 1rem;" autocomplete="current-password">
         <button type="button" class="btn btn-primary" id="btnSubmitEmailAuth" style="width: 100%; justify-content: center;">Sign In</button>
+        <button type="button" class="btn btn-outline" id="btnCreateEmailAccount" style="width: 100%; justify-content: center; margin-top:.65rem;">Create Account</button>
       </form>
+      <button type="button" class="btn btn-light" id="btnGateSignOut" style="display:none; width:100%; justify-content:center; margin-top:.75rem;">Sign Out</button>
     </div>
   </div>
 
@@ -958,12 +1077,18 @@
       </div>
       <div class="header-actions">
         <span class="user-greeting" id="userGreetingText"></span>
-        <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Family Recipe</button>
-        <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">📋 Paste &amp; Import Recipe</button>
-        <button type="button" class="btn btn-outline" id="btnCustomizeBook">✒️ Cookbook Dedication</button>
-        <button type="button" class="btn btn-outline" id="btnExportBook">💾 Backup JSON</button>
-        <button type="button" class="btn btn-outline" id="btnTriggerRestore">📂 Restore JSON</button>
-        <button type="button" class="btn btn-light" id="btnSignOut">🚪 Sign Out</button>
+        <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Recipe</button>
+        <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">Paste &amp; Import</button>
+        <details class="header-tools">
+          <summary aria-label="Open cookbook tools">Cookbook Tools <span aria-hidden="true">⌄</span></summary>
+          <div class="header-tools-menu">
+            <button type="button" class="btn btn-outline" id="btnManageFamily">Manage Family Access</button>
+            <button type="button" class="btn btn-outline" id="btnCustomizeBook">Cookbook Dedication</button>
+            <button type="button" class="btn btn-outline" id="btnExportBook">Download JSON Backup</button>
+            <button type="button" class="btn btn-outline" id="btnTriggerRestore">Restore from JSON</button>
+          </div>
+        </details>
+        <button type="button" class="btn btn-light" id="btnSignOut">Sign Out</button>
         <input type="file" id="fileRestoreInput" accept=".json" style="display:none">
       </div>
     </div>
@@ -1204,6 +1329,19 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="familyAccessModal">
+    <div class="modal-panel" style="max-width:760px;">
+      <div class="modal-header">
+        <h2>Family Access</h2>
+        <button type="button" class="btn btn-light btn-sm" id="btnCloseFamilyAccess">Close</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-muted); margin-bottom:1rem;">Approve new accounts or revoke access. Changes take effect immediately.</p>
+        <div id="familyAccessList"><p>Loading family accounts...</p></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       'use strict';
@@ -1213,14 +1351,8 @@
       // =========================================================================
       const ADMIN_EMAIL = "kristimilman@gmail.com";
 
-      // 👪 AUTHORIZED FAMILY MEMBERS LIST
-      // Add each family member's email address here to allow them in.
-      // (If this list is left completely empty [], ANY person with an account can log in).
-      const AUTHORIZED_FAMILY_EMAILS = [
-        "kristimilman@gmail.com"
-        // Add your family members' emails below:
-        // "example.family@gmail.com",
-      ];
+      // Family access is controlled by the Firestore authorizedMembers collection.
+      // New accounts are pending until approved by the administrator.
 
       // Firebase Config
       const firebaseConfig = {
@@ -1330,63 +1462,109 @@
       // =========================================================================
       // 🔒 AUTHENTICATION LISTENERS & CONTROLS
       // =========================================================================
-      auth.onAuthStateChanged((user) => {
+      let familyAccessUnsubscribe = null;
+
+      auth.onAuthStateChanged(async (user) => {
         const gate = document.getElementById('accessGateModal');
         const errBanner = document.getElementById('gateErrorBanner');
+        const gateSignOut = document.getElementById('btnGateSignOut');
+        if (familyAccessUnsubscribe) {
+          familyAccessUnsubscribe();
+          familyAccessUnsubscribe = null;
+        }
 
-        if (user) {
-          const userEmail = (user.email || '').toLowerCase();
-          
-          // Whitelist Verification check (if populated)
-          if (AUTHORIZED_FAMILY_EMAILS.length > 0) {
-            const isAuthorized = AUTHORIZED_FAMILY_EMAILS.some(e => e.toLowerCase() === userEmail);
-            if (!isAuthorized) {
-              errBanner.className = 'status-banner error';
-              errBanner.textContent = `Access Denied: ${user.email} is not listed on the Clemons family roster.`;
-              auth.signOut();
-              return;
-            }
-          }
-
-          // User is authorized! Unlock cookbook
-          gate.classList.add('unlocked');
-          errBanner.className = 'status-banner';
-          errBanner.textContent = '';
-
-          // Display user email / name in header
-          const greetingEl = document.getElementById('userGreetingText');
-          if (greetingEl) {
-            greetingEl.textContent = `👋 ${user.displayName || user.email}`;
-          }
-
-          // Any authorized family member can add, edit, or delete recipes
-          document.getElementById('btnNewRecipe').style.display = 'inline-flex';
-          document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
-          document.getElementById('btnExportBook').style.display = 'inline-flex';
-
-          // Dedication and JSON restore reserved for kristimilman@gmail.com
-          if (userEmail === ADMIN_EMAIL.toLowerCase()) {
-            document.getElementById('btnCustomizeBook').style.display = 'inline-flex';
-            document.getElementById('btnTriggerRestore').style.display = 'inline-flex';
-          } else {
-            document.getElementById('btnCustomizeBook').style.display = 'none';
-            document.getElementById('btnTriggerRestore').style.display = 'none';
-          }
-
-          loadState();
-        } else {
-          // Logged out
+        if (!user) {
           gate.classList.remove('unlocked');
           document.getElementById('userGreetingText').textContent = '';
+          gateSignOut.style.display = 'none';
+          return;
         }
+
+        const userEmail = (user.email || '').trim().toLowerCase();
+        const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
+
+        if (!isAdmin) {
+          const memberRef = db.collection('authorizedMembers').doc(user.uid);
+          try {
+            let memberSnap = await memberRef.get();
+            if (!memberSnap.exists) {
+              await memberRef.set({
+                email: user.email || '',
+                displayName: user.displayName || '',
+                status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              memberSnap = await memberRef.get();
+            }
+            const member = memberSnap.data() || {};
+            if (member.status !== 'approved') {
+              gate.classList.remove('unlocked');
+              gateSignOut.style.display = 'inline-flex';
+              errBanner.className = 'status-banner ' + (member.status === 'revoked' ? 'error' : 'success');
+              errBanner.textContent = member.status === 'revoked'
+                ? 'Access to the family cookbook has been revoked. Contact Kristi if you believe this is an error.'
+                : 'Your account is registered and awaiting approval. You can close this page and return after the administrator approves your access.';
+              return;
+            }
+          } catch (error) {
+            gate.classList.remove('unlocked');
+            gateSignOut.style.display = 'inline-flex';
+            errBanner.className = 'status-banner error';
+            errBanner.textContent = 'Unable to verify family access. Please try again. ' + error.message;
+            return;
+          }
+        }
+
+        // User is approved (or is the administrator). Unlock the cookbook.
+        gate.classList.add('unlocked');
+        errBanner.className = 'status-banner';
+        errBanner.textContent = '';
+        gateSignOut.style.display = 'none';
+
+        const greetingEl = document.getElementById('userGreetingText');
+        if (greetingEl) greetingEl.textContent = `👋 ${user.displayName || user.email}`;
+
+        document.getElementById('btnNewRecipe').style.display = 'inline-flex';
+        document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
+        document.getElementById('btnExportBook').style.display = 'inline-flex';
+        document.getElementById('btnManageFamily').style.display = isAdmin ? 'inline-flex' : 'none';
+        document.getElementById('btnCustomizeBook').style.display = isAdmin ? 'inline-flex' : 'none';
+        document.getElementById('btnTriggerRestore').style.display = isAdmin ? 'inline-flex' : 'none';
+
+        if (isAdmin) startFamilyAccessListener();
+        loadState();
       });
 
-      // Google Sign-In Trigger
+      function startFamilyAccessListener() {
+        const list = document.getElementById('familyAccessList');
+        familyAccessUnsubscribe = db.collection('authorizedMembers').onSnapshot((snapshot) => {
+          if (snapshot.empty) {
+            list.innerHTML = '<p>No family accounts have registered yet.</p>';
+            return;
+          }
+          const members = [];
+          snapshot.forEach(doc => members.push({ id: doc.id, ...doc.data() }));
+          members.sort((a, b) => {
+            const rank = { pending: 0, approved: 1, revoked: 2 };
+            return (rank[a.status] ?? 3) - (rank[b.status] ?? 3) || String(a.email || '').localeCompare(String(b.email || ''));
+          });
+          list.innerHTML = members.map(member => {
+            const status = ['approved', 'pending', 'revoked'].includes(member.status) ? member.status : 'unknown';
+            const action = status === 'approved'
+              ? `<button type="button" class="btn btn-danger btn-sm" data-member-action="revoke" data-member-id="${escapeHtml(member.id)}">Revoke</button>`
+              : `<button type="button" class="btn btn-primary btn-sm" data-member-action="approve" data-member-id="${escapeHtml(member.id)}">Approve</button>`;
+            const created = member.createdAt && member.createdAt.toDate ? member.createdAt.toDate().toLocaleDateString() : 'Date unavailable';
+            return `<div class="member-row"><div><div class="member-email">${escapeHtml(member.email || 'Email unavailable')}</div><div class="member-meta">${escapeHtml(member.displayName || '')} · Registered ${created}</div></div><div class="member-actions"><span class="member-status ${status}">${status}</span>${action}</div></div>`;
+          }).join('');
+        }, (error) => {
+          list.innerHTML = `<p class="status-banner error">Unable to load family accounts: ${escapeHtml(error.message)}</p>`;
+        });
+      }
+
       function handleGoogleSignIn() {
         const errBanner = document.getElementById('gateErrorBanner');
         errBanner.className = 'status-banner';
         errBanner.textContent = '';
-
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch((error) => {
           errBanner.className = 'status-banner error';
@@ -1394,21 +1572,42 @@
         });
       }
 
-      // Email & Password Sign-In Trigger
       function handleEmailAuth() {
         const email = document.getElementById('familyEmailInput').value.trim();
-        const password = document.getElementById('familyPasswordInput').value.trim();
+        const password = document.getElementById('familyPasswordInput').value;
         const errBanner = document.getElementById('gateErrorBanner');
-
         if (!email || !password) {
           errBanner.className = 'status-banner error';
-          errBanner.textContent = 'Please enter both email and password.';
+          errBanner.textContent = 'Enter both your email address and password.';
           return;
         }
-
         auth.signInWithEmailAndPassword(email, password).catch((error) => {
           errBanner.className = 'status-banner error';
-          errBanner.textContent = error.message;
+          errBanner.textContent = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential'
+            ? 'No matching account was found. If this is your first visit, select Create Account.'
+            : error.message;
+        });
+      }
+
+      function handleEmailSignUp() {
+        const email = document.getElementById('familyEmailInput').value.trim();
+        const password = document.getElementById('familyPasswordInput').value;
+        const errBanner = document.getElementById('gateErrorBanner');
+        if (!email || !password) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Enter an email address and choose a password.';
+          return;
+        }
+        if (password.length < 6) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Firebase requires passwords to be at least 6 characters.';
+          return;
+        }
+        auth.createUserWithEmailAndPassword(email, password).catch((error) => {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = error.code === 'auth/email-already-in-use'
+            ? 'An account already exists for this email. Select Sign In instead.'
+            : error.message;
         });
       }
 
@@ -2476,6 +2675,19 @@
         // Sign In Events
         document.getElementById('btnGoogleSignIn').addEventListener('click', handleGoogleSignIn);
         document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
+        document.getElementById('btnCreateEmailAccount').addEventListener('click', handleEmailSignUp);
+        document.getElementById('btnGateSignOut').addEventListener('click', () => auth.signOut());
+        document.getElementById('btnManageFamily').addEventListener('click', () => document.getElementById('familyAccessModal').classList.add('open'));
+        document.getElementById('btnCloseFamilyAccess').addEventListener('click', () => document.getElementById('familyAccessModal').classList.remove('open'));
+        document.getElementById('familyAccessList').addEventListener('click', async (event) => {
+          const button = event.target.closest('[data-member-action]');
+          if (!button) return;
+          const memberId = button.dataset.memberId;
+          const status = button.dataset.memberAction === 'approve' ? 'approved' : 'revoked';
+          button.disabled = true;
+          try { await db.collection('authorizedMembers').doc(memberId).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
+          catch (error) { alert('Unable to update family access: ' + error.message); button.disabled = false; }
+        });
         document.getElementById('familyPasswordInput').addEventListener('keydown', (e) => {
           if (e.key === 'Enter') handleEmailAuth();
         });
@@ -2518,6 +2730,10 @@
         document.getElementById('btnRunRecipeParser').addEventListener('click', handleRunRecipeParser);
 
         // Dedication & Export
+        const headerTools = document.querySelector('.header-tools');
+        document.querySelectorAll('.header-tools-menu .btn').forEach(button => {
+          button.addEventListener('click', () => { headerTools.open = false; });
+        });
         document.getElementById('btnCustomizeBook').addEventListener('click', () => {
           document.getElementById('bookTitleInput').value = cookbookMeta.title;
           document.getElementById('bookSubtitleInput').value = cookbookMeta.subtitle;
