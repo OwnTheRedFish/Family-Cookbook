@@ -1561,16 +1561,20 @@
         });
       }
 
-      function handleGoogleSignIn() {
-        const errBanner = document.getElementById('gateErrorBanner');
-        errBanner.className = 'status-banner';
-        errBanner.textContent = '';
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch((error) => {
-          errBanner.className = 'status-banner error';
-          errBanner.textContent = error.message;
-        });
-      }
+     function handleGoogleSignIn() {
+  const errBanner = document.getElementById('gateErrorBanner');
+
+  errBanner.className = 'status-banner';
+  errBanner.textContent = 'Opening Google sign-in…';
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  auth.signInWithRedirect(provider).catch((error) => {
+    console.error('Google redirect sign-in failed:', error.code, error.message);
+    errBanner.className = 'status-banner error';
+    errBanner.textContent = `${error.code}: ${error.message}`;
+  });
+}
 
       function handleEmailAuth() {
         const email = document.getElementById('familyEmailInput').value.trim();
