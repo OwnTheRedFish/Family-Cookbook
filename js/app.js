@@ -1,0 +1,1854 @@
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 🔒 AUTHENTICATION & ACCESS CONTROL 
+      // =========================================================================
+      const ADMIN_EMAIL = "kristimilman@gmail.com";
+
+      // Family access is controlled by the Firestore authorizedMembers collection.
+      // New accounts are pending until approved by the administrator.
+
+      // Firebase Config
+      const firebaseConfig = {
+        apiKey: "AIzaSyCBwJnB3TmTGvqnbt_WdYvzo2aUKp_7rhk",
+        authDomain: "clemons-family-cookbook.firebaseapp.com",
+        projectId: "clemons-family-cookbook",
+        storageBucket: "clemons-family-cookbook.firebasestorage.app",
+        messagingSenderId: "232806060471",
+        appId: "1:232806060471:web:d320e16c5cafe10d2b1832",
+        measurementId: "G-9LSTPRDZXJ"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+
+      // Meal Types Order definition
+      const MEAL_TYPES_ORDER = [
+        'Breakfast',
+        'Brunch',
+        'Lunch',
+        'Appetizers',
+        'Soups/Salads',
+        'Dinner',
+        'Desserts',
+        'Beverages'
+      ];
+
+      function normalizeMealType(val) {
+        if (!val) return 'Dinner';
+        if (MEAL_TYPES_ORDER.includes(val)) return val;
+        const legacyMap = {
+          'Morning / Breakfast': 'Breakfast',
+          'Midday / Lunch': 'Lunch',
+          'Afternoon / Snack': 'Appetizers',
+          'Evening / Dinner': 'Dinner',
+          'Main Dishes': 'Dinner',
+          'Late Night / Dessert': 'Desserts',
+          'Holiday / Special Occasion': 'Dinner'
+        };
+        return legacyMap[val] || val;
+      }
+
+      // Starter Templates
+      const DEFAULT_RECIPES = [
+        {
+          title: 'Cast-Iron Buttermilk & Cardamom Pancakes',
+          mealType: 'Breakfast',
+          origin: 'Southern',
+          course: 'Bread & Pastry',
+          servings: 4,
+          prepMins: 10,
+          cookMins: 15,
+          tags: ['Vegetarian', 'Kid Favorite', 'Quick', 'Breakfast'],
+          favorite: true,
+          story: 'Our go-to birthday morning and snow-day breakfast. The tiny pinch of freshly ground cardamom is our family secret ingredient that guests can never quite guess.',
+          myAdjustments: 'If we are out of real buttermilk, I mix 1.5 cups of whole milk with 1.5 tablespoons of fresh lemon juice and let it sit for 5 minutes. Never overmix the lumps!',
+          sourceUrl: '',
+          updatedAt: 1710000001000,
+          ingredients: [
+            { amount: '2', unit: 'cups', item: 'all-purpose flour', note: 'spooned and leveled' },
+            { amount: '2', unit: 'tbsp', item: 'granulated sugar', note: '' },
+            { amount: '2', unit: 'tsp', item: 'baking powder', note: '' },
+            { amount: '0.5', unit: 'tsp', item: 'baking soda', note: '' },
+            { amount: '0.25', unit: 'tsp', item: 'ground green cardamom', note: 'secret ingredient' },
+            { amount: '2', unit: 'cups', item: 'full-fat buttermilk', note: 'shaken well' },
+            { amount: '2', unit: 'large', item: 'eggs', note: 'lightly beaten' },
+            { amount: '4', unit: 'tbsp', item: 'salted butter', note: 'melted, plus extra for griddle' }
+          ],
+          steps: [
+            {
+              instruction: 'Whisk flour, sugar, baking powder, baking soda, salt, and cardamom together in a large bowl.',
+              tip: ''
+            },
+            {
+              instruction: 'In a separate spouted pitcher, whisk buttermilk, eggs, and melted butter together, then fold gently into dry ingredients.',
+              tip: 'Stop stirring while there are still small floury lumps! Resting the batter for 10 minutes makes them twice as fluffy.'
+            },
+            {
+              instruction: 'Heat a cast-iron skillet or griddle over medium heat and brush with salted butter. Ladle 1/3 cup batter per pancake.',
+              tip: 'Wait until bubbles pop on top and stay open before flipping once.'
+            }
+          ]
+        }
+      ];
+
+      // Application State variables
+      let recipes = [];
+      let cookbookMeta = {
+        title: 'The Clemons Family Cookbook',
+        subtitle: 'Kitchen memories, family recipes & daily gatherings'
+      };
+      let activeFilters = {
+        search: '',
+        mealType: 'ALL',
+        origin: 'ALL',
+        course: 'ALL',
+        tag: 'ALL',
+        quickOnly: false,
+        sortBy: 'mealType'
+      };
+      let currentViewingRecipeId = null;
+      let currentEditingRecipeId = null;
+      let currentScaleMultiplier = 1;
+
+      // =========================================================================
+      // 🔒 AUTHENTICATION LISTENERS & CONTROLS
+      // =========================================================================
+      let familyAccessUnsubscribe = null;
+      let favoritesUnsubscribe = null;
+      let userFavoriteIds = new Set();
+      let recipesUnsubscribe = null;
+      let metadataUnsubscribe = null;
+
+      auth.onAuthStateChanged(async (user) => {
+        const gate = document.getElementById('accessGateModal');
+        const errBanner = document.getElementById('gateErrorBanner');
+        const gateSignOut = document.getElementById('btnGateSignOut');
+        if (familyAccessUnsubscribe) {
+          familyAccessUnsubscribe();
+          familyAccessUnsubscribe = null;
+        }
+        if (favoritesUnsubscribe) {
+          favoritesUnsubscribe();
+          favoritesUnsubscribe = null;
+        }
+        userFavoriteIds = new Set();
+
+        if (!user) {
+          stopCookbookListenersAndClearState();
+          gate.classList.remove('unlocked');
+          document.getElementById('userGreetingText').textContent = '';
+          document.getElementById('btnAccount').style.display = 'none';
+          gateSignOut.style.display = 'none';
+          return;
+        }
+
+        const userEmail = (user.email || '').trim().toLowerCase();
+        const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
+
+        if (!isAdmin) {
+          const memberRef = db.collection('authorizedMembers').doc(user.uid);
+          try {
+            let memberSnap = await memberRef.get();
+            if (!memberSnap.exists) {
+              // A new email/password account receives its cookbook name immediately
+              // after Firebase Auth creates it. Do not create a blank enrollment record
+              // in the short interval before that profile update completes.
+              if (!user.displayName) {
+                gate.classList.remove('unlocked');
+                gateSignOut.style.display = 'inline-flex';
+                showGateMessage('success', 'Finishing your account setup…');
+                return;
+              }
+              await memberRef.set({
+                email: user.email || '',
+                displayName: user.displayName,
+                status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              memberSnap = await memberRef.get();
+            }
+            const member = memberSnap.data() || {};
+            if (member.status !== 'approved') {
+              gate.classList.remove('unlocked');
+              gateSignOut.style.display = 'inline-flex';
+              errBanner.className = 'status-banner ' + (member.status === 'revoked' ? 'error' : 'success');
+              errBanner.textContent = member.status === 'revoked'
+                ? 'Access to the family cookbook has been revoked. Contact Kristi if you believe this is an error.'
+                : 'Your account is registered and awaiting approval. You can close this page and return after the administrator approves your access.';
+              return;
+            }
+          } catch (error) {
+            gate.classList.remove('unlocked');
+            gateSignOut.style.display = 'inline-flex';
+            errBanner.className = 'status-banner error';
+            errBanner.textContent = 'Unable to verify family access. Please try again. ' + error.message;
+            return;
+          }
+        }
+
+        // User is approved (or is the administrator). Unlock the cookbook.
+        gate.classList.add('unlocked');
+        errBanner.className = 'status-banner';
+        errBanner.textContent = '';
+        gateSignOut.style.display = 'none';
+
+        const greetingEl = document.getElementById('userGreetingText');
+        if (greetingEl) greetingEl.textContent = `👋 ${user.displayName || user.email}`;
+
+        document.getElementById('btnNewRecipe').style.display = 'inline-flex';
+        document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
+        document.getElementById('btnExportBook').style.display = 'inline-flex';
+        document.getElementById('btnAccount').style.display = 'inline-flex';
+        document.getElementById('btnManageFamily').style.display = isAdmin ? 'inline-flex' : 'none';
+        document.getElementById('btnCustomizeBook').style.display = isAdmin ? 'inline-flex' : 'none';
+        document.getElementById('btnTriggerRestore').style.display = isAdmin ? 'inline-flex' : 'none';
+
+        if (isAdmin) startFamilyAccessListener();
+        startUserFavoritesListener(user.uid);
+        loadState();
+      });
+
+      function startFamilyAccessListener() {
+        const list = document.getElementById('familyAccessList');
+        familyAccessUnsubscribe = db.collection('authorizedMembers').onSnapshot((snapshot) => {
+          if (snapshot.empty) {
+            list.innerHTML = '<p>No family accounts have registered yet.</p>';
+            return;
+          }
+          const members = [];
+          snapshot.forEach(doc => members.push({ id: doc.id, ...doc.data() }));
+          members.sort((a, b) => {
+            const rank = { pending: 0, approved: 1, revoked: 2 };
+            return (rank[a.status] ?? 3) - (rank[b.status] ?? 3) || String(a.email || '').localeCompare(String(b.email || ''));
+          });
+          list.innerHTML = members.map(member => {
+            const status = ['approved', 'pending', 'revoked'].includes(member.status) ? member.status : 'unknown';
+            const action = status === 'approved'
+              ? `<button type="button" class="btn btn-danger btn-sm" data-member-action="revoke" data-member-id="${escapeHtml(member.id)}">Revoke</button>`
+              : `<button type="button" class="btn btn-primary btn-sm" data-member-action="approve" data-member-id="${escapeHtml(member.id)}">Approve</button>`;
+            const created = member.createdAt && member.createdAt.toDate ? member.createdAt.toDate().toLocaleDateString() : 'Date unavailable';
+            return `<div class="member-row"><div><div class="member-email">${escapeHtml(member.email || 'Email unavailable')}</div><div class="member-meta">${escapeHtml(member.displayName || '')} · Registered ${created}</div></div><div class="member-actions"><span class="member-status ${status}">${status}</span>${action}</div></div>`;
+          }).join('');
+        }, (error) => {
+          list.innerHTML = `<p class="status-banner error">Unable to load family accounts: ${escapeHtml(error.message)}</p>`;
+        });
+      }
+
+      function showGateMessage(type, message) {
+        const banner = document.getElementById('gateErrorBanner');
+        banner.className = 'status-banner ' + type;
+        banner.textContent = message;
+      }
+
+      function handleForgotPassword() {
+        const email = document.getElementById('familyEmailInput').value.trim();
+        if (!email) {
+          showGateMessage('error', 'Enter your email address first, then select Forgot password.');
+          document.getElementById('familyEmailInput').focus();
+          return;
+        }
+        auth.sendPasswordResetEmail(email)
+          .then(() => showGateMessage('success', 'Password-reset instructions have been sent if an account exists for that email address.'))
+          .catch(error => showGateMessage('error', error.message));
+      }
+
+      function startUserFavoritesListener(uid) {
+        favoritesUnsubscribe = db.collection('users').doc(uid).collection('favorites').onSnapshot((snapshot) => {
+          userFavoriteIds = new Set(snapshot.docs.map(doc => doc.id));
+          if (recipes.length) renderAll();
+          if (document.getElementById('accountModal').classList.contains('open')) renderAccountModal();
+        }, error => console.error('Unable to load personal favorites:', error));
+      }
+
+      function isRecipeFavorited(recipeId) {
+        return userFavoriteIds.has(recipeId);
+      }
+
+      function toggleFavorite(recipeId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        const ref = db.collection('users').doc(user.uid).collection('favorites').doc(recipeId);
+        if (isRecipeFavorited(recipeId)) {
+          ref.delete().catch(error => alert('Unable to remove favorite: ' + error.message));
+        } else {
+          ref.set({ recipeId, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .catch(error => alert('Unable to save favorite: ' + error.message));
+        }
+      }
+
+      function renderAccountModal() {
+        const user = auth.currentUser;
+        if (!user) return;
+        document.getElementById('accountDisplayName').value = user.displayName || '';
+        document.getElementById('accountEmailText').textContent = user.email || '';
+        const mine = recipes.filter(recipe => recipe.submittedByUid === user.uid);
+        const favorites = recipes.filter(recipe => isRecipeFavorited(recipe.id));
+        renderAccountRecipeList('myRecipesList', mine, 'You have not submitted any recipes yet.');
+        renderAccountRecipeList('myFavoritesList', favorites, 'You have not favorited any recipes yet.');
+      }
+
+      function renderAccountRecipeList(containerId, list, emptyText) {
+        const container = document.getElementById(containerId);
+        if (!list.length) {
+          container.innerHTML = `<p class="account-empty">${escapeHtml(emptyText)}</p>`;
+          return;
+        }
+        container.innerHTML = list.map(recipe => `
+          <div class="account-recipe-row">
+            <div><strong>${escapeHtml(recipe.title)}</strong><span>${escapeHtml(normalizeMealType(recipe.mealType || recipe.timeOfDay))} · ${escapeHtml(recipe.course || 'Recipe')}</span></div>
+            <button type="button" class="btn btn-light btn-sm" data-account-recipe-id="${escapeHtml(recipe.id)}">View</button>
+          </div>
+        `).join('');
+      }
+
+      async function saveDisplayName() {
+        const user = auth.currentUser;
+        const name = document.getElementById('accountDisplayName').value.trim();
+        const banner = document.getElementById('accountBanner');
+        if (!user) return;
+        if (!name) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Please enter a display name.';
+          return;
+        }
+        try {
+          await user.updateProfile({ displayName: name });
+          await db.collection('users').doc(user.uid).set({ displayName: name, email: user.email || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          await db.collection('authorizedMembers').doc(user.uid).set({ displayName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          await updateSubmittedRecipeNames(user.uid, name);
+          document.getElementById('userGreetingText').textContent = `👋 ${name}`;
+          banner.className = 'status-banner success';
+          banner.textContent = 'Your cookbook name has been saved and updated on recipes you added.';
+        } catch (error) {
+          banner.className = 'status-banner error';
+          banner.textContent = error.message;
+        }
+      }
+
+      async function changePassword() {
+        const user = auth.currentUser;
+        const currentPassword = document.getElementById('currentPasswordInput').value;
+        const newPassword = document.getElementById('newPasswordInput').value;
+        const confirmPassword = document.getElementById('confirmNewPasswordInput').value;
+        const banner = document.getElementById('accountBanner');
+        if (!user || !user.email) return;
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Complete all password fields.';
+          return;
+        }
+        if (newPassword.length < 6) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Firebase requires passwords to be at least 6 characters.';
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'The new-password entries do not match.';
+          return;
+        }
+        try {
+          const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+          await user.reauthenticateWithCredential(credential);
+          await user.updatePassword(newPassword);
+          document.getElementById('currentPasswordInput').value = '';
+          document.getElementById('newPasswordInput').value = '';
+          document.getElementById('confirmNewPasswordInput').value = '';
+          banner.className = 'status-banner success';
+          banner.textContent = 'Your password has been changed.';
+        } catch (error) {
+          banner.className = 'status-banner error';
+          banner.textContent = error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential'
+            ? 'Your current password was not accepted.'
+            : error.message;
+        }
+      }
+
+      function handleEmailAuth() {
+        const email = document.getElementById('familyEmailInput').value.trim();
+        const password = document.getElementById('familyPasswordInput').value;
+        const errBanner = document.getElementById('gateErrorBanner');
+        if (!email || !password) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Enter both your email address and password.';
+          return;
+        }
+        auth.signInWithEmailAndPassword(email, password).catch((error) => {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential'
+            ? 'No matching account was found. If this is your first visit, select Create Account.'
+            : error.message;
+        });
+      }
+
+      async function handleEmailSignUp() {
+        const name = document.getElementById('familyDisplayNameInput').value.trim();
+        const email = document.getElementById('familyEmailInput').value.trim();
+        const password = document.getElementById('familyPasswordInput').value;
+        const errBanner = document.getElementById('gateErrorBanner');
+        if (!name) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Enter the name you want displayed in the cookbook before creating an account.';
+          document.getElementById('familyDisplayNameInput').focus();
+          return;
+        }
+        if (name.length > 80) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Your cookbook name must be 80 characters or fewer.';
+          return;
+        }
+        if (!email || !password) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Enter an email address and choose a password.';
+          return;
+        }
+        if (password.length < 6) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Firebase requires passwords to be at least 6 characters.';
+          return;
+        }
+        try {
+          const credential = await auth.createUserWithEmailAndPassword(email, password);
+          await credential.user.updateProfile({ displayName: name });
+          await db.collection('users').doc(credential.user.uid).set({
+            displayName: name,
+            email: credential.user.email || email,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          await db.collection('authorizedMembers').doc(credential.user.uid).set({
+            email: credential.user.email || email,
+            displayName: name,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          showGateMessage('success', 'Your account was created. Reloading your account setup…');
+          window.setTimeout(() => window.location.reload(), 250);
+        } catch (error) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = error.code === 'auth/email-already-in-use'
+            ? 'An account already exists for this email. Select Sign In instead.'
+            : error.message;
+        }
+      }
+
+      function handleSignOut() {
+        if (confirm("Sign out of the Clemons Family Cookbook?")) {
+          auth.signOut();
+        }
+      }
+
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function safeHttpUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try {
+          const parsed = new URL(raw);
+          return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
+        } catch (_) {
+          return '';
+        }
+      }
+
+      function toEpochMillis(value) {
+        if (typeof value === 'number') return value;
+        if (value && typeof value.toMillis === 'function') return value.toMillis();
+        if (value && typeof value.seconds === 'number') return value.seconds * 1000;
+        return 0;
+      }
+
+      function stopCookbookListenersAndClearState() {
+        if (recipesUnsubscribe) { recipesUnsubscribe(); recipesUnsubscribe = null; }
+        if (metadataUnsubscribe) { metadataUnsubscribe(); metadataUnsubscribe = null; }
+        recipes = [];
+        currentViewingRecipeId = null;
+        currentEditingRecipeId = null;
+        document.getElementById('recipeGrid').innerHTML = '';
+        document.getElementById('resultsCountText').textContent = '';
+        document.querySelectorAll('.modal-backdrop').forEach(modal => modal.classList.remove('open'));
+      }
+
+      async function updateSubmittedRecipeNames(uid, name) {
+        const mine = recipes.filter(recipe => recipe.submittedByUid === uid && recipe.submittedByName !== name);
+        for (let start = 0; start < mine.length; start += 400) {
+          const batch = db.batch();
+          mine.slice(start, start + 400).forEach(recipe => {
+            batch.update(db.collection('recipes').doc(recipe.id), {
+              submittedByName: name,
+              lastEditedByUid: uid,
+              lastEditedByName: name,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+          await batch.commit();
+        }
+      }
+
+      // Fraction Display Engine
+      function getFractionString(val) {
+        if (typeof val !== 'number' || isNaN(val)) return '';
+        if (val <= 0) return '0';
+        
+        const tolerance = 0.01;
+        const whole = Math.floor(val);
+        const frac = val - whole;
+        if (frac < tolerance) return whole > 0 ? String(whole) : '';
+        if (Math.abs(frac - 1) < tolerance) return String(whole + 1);
+        const commonFractions = [
+          { value: 1/2, display: '1/2' },
+          { value: 1/3, display: '1/3' },
+          { value: 2/3, display: '2/3' },
+          { value: 1/4, display: '1/4' },
+          { value: 3/4, display: '3/4' },
+          { value: 1/8, display: '1/8' },
+          { value: 3/8, display: '3/8' },
+          { value: 5/8, display: '5/8' },
+          { value: 7/8, display: '7/8' },
+          { value: 1/5, display: '1/5' },
+          { value: 2/5, display: '2/5' },
+          { value: 3/5, display: '3/5' },
+          { value: 4/5, display: '4/5' },
+          { value: 1/6, display: '1/6' },
+          { value: 5/6, display: '5/6' }
+        ];
+        for (const f of commonFractions) {
+          if (Math.abs(frac - f.value) < tolerance) {
+            return whole > 0 ? `${whole} ${f.display}` : f.display;
+          }
+        }
+        let bestDenominator = 1;
+        let bestNumerator = 0;
+        let minDiff = frac;
+        for (let d = 2; d <= 16; d++) {
+          const n = Math.round(frac * d);
+          const diff = Math.abs(frac - (n / d));
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestDenominator = d;
+            bestNumerator = n;
+          }
+        }
+        if (bestNumerator > 0 && minDiff < 0.05) {
+          const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+          const divisor = gcd(bestNumerator, bestDenominator);
+          const simplifiedNumerator = bestNumerator / divisor;
+          const simplifiedDenominator = bestDenominator / divisor;
+          const fracDisplay = `${simplifiedNumerator}/${simplifiedDenominator}`;
+          return whole > 0 ? `${whole} ${fracDisplay}` : fracDisplay;
+        }
+        return String(parseFloat(val.toFixed(2)));
+      }
+
+      function formatScaledAmount(amountStr, multiplier) {
+        if (!amountStr) return '';
+        const trimmed = String(amountStr).trim();
+        const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+        const fractionMatch = trimmed.match(/^(\d+)\s*\/\s*(\d+)$/);
+        let numVal = NaN;
+        if (mixedMatch) {
+          numVal = parseFloat(mixedMatch[1]) + (parseFloat(mixedMatch[2]) / parseFloat(mixedMatch[3]));
+        } else if (fractionMatch) {
+          numVal = parseFloat(fractionMatch[1]) / parseFloat(fractionMatch[2]);
+        } else if (/^\d+(\.\d+)?$/.test(trimmed)) {
+          numVal = parseFloat(trimmed);
+        }
+        if (isNaN(numVal)) {
+          return multiplier === 1 ? trimmed : `${trimmed} (×${multiplier})`;
+        }
+        const scaled = numVal * multiplier;
+        return getFractionString(scaled);
+      }
+
+      // Parser Logic
+      const UNICODE_FRACTIONS = {
+        '½': '1/2', '⅓': '1/3', '⅔': '2/3', '¼': '1/4', '¾': '3/4',
+        '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5', '⅙': '1/6',
+        '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8'
+      };
+      const KNOWN_UNITS = new Set([
+        'cup', 'cups', 'c', 'c.',
+        'tablespoon', 'tablespoons', 'tbsp', 'tbsp.', 'tbs', 'tbs.', 'T',
+        'teaspoon', 'teaspoons', 'tsp', 'tsp.', 't',
+        'ounce', 'ounces', 'oz', 'oz.',
+        'fluid ounce', 'fluid ounces', 'fl oz',
+        'pound', 'pounds', 'lb', 'lbs', 'lb.', 'lbs.',
+        'gram', 'grams', 'g', 'g.',
+        'kilogram', 'kilograms', 'kg', 'kg.',
+        'milligram', 'milligrams', 'mg',
+        'milliliter', 'milliliters', 'ml', 'ml.',
+        'liter', 'liters', 'l',
+        'quart', 'quarts', 'qt', 'qt.', 'qts',
+        'pint', 'pints', 'pt', 'pt.', 'pts',
+        'gallon', 'gallons', 'gal',
+        'pinch', 'pinches', 'dash', 'dashes', 'drop', 'drops', 'smidgen',
+        'clove', 'cloves', 'head', 'heads', 'bulb', 'bulbs',
+        'bunch', 'bunches', 'stalk', 'stalks', 'rib', 'ribs', 'sprig', 'sprigs', 'leaf', 'leaves',
+        'can', 'cans', 'jar', 'jars', 'bottle', 'bottles', 'package', 'packages', 'pkg', 'pkg.', 'packet', 'packets', 'box', 'boxes', 'bag', 'bags', 'container', 'containers',
+        'slice', 'slices', 'piece', 'pieces', 'strip', 'strips', 'fillet', 'fillets', 'breast', 'breasts', 'thigh', 'thighs',
+        'stick', 'sticks', 'ear', 'ears', 'handful', 'handfuls', 'scoop', 'scoops',
+        'small', 'medium', 'large', 'extra-large', 'whole'
+      ]);
+
+      function normalizeUnicodeFractions(text) {
+        let out = text;
+        for (const [uni, ascii] of Object.entries(UNICODE_FRACTIONS)) {
+          out = out.replace(new RegExp(`(\\d)${uni}`, 'g'), `$1 ${ascii}`);
+          out = out.replace(new RegExp(uni, 'g'), ascii);
+        }
+        return out;
+      }
+
+      function parseDurationToMinutes(text) {
+        if (!text) return null;
+        let total = 0;
+        let matched = false;
+        const hrMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)\b/i);
+        const minMatch = text.match(/(\d+)\s*(?:minutes?|mins?|min|m)\b/i);
+        if (hrMatch) {
+          total += Math.round(parseFloat(hrMatch[1]) * 60);
+          matched = true;
+        }
+        if (minMatch) {
+          total += parseInt(minMatch[1], 10);
+          matched = true;
+        }
+        if (!matched) {
+          const bareNum = text.match(/\b(\d+)\b/);
+          if (bareNum) return parseInt(bareNum[1], 10);
+        }
+        return matched ? total : null;
+      }
+
+      function parseSingleIngredientLine(rawLine) {
+        let line = normalizeUnicodeFractions(rawLine)
+          .replace(/^[\s•‣⁃▪▫◦\*+\-–—☐☑✓✔✗✘\[\]()]+/, '')
+          .trim();
+        if (!line) return null;
+        let amount = '';
+        let unit = '';
+        let item = '';
+        let note = '';
+        const trailingParenMatch = line.match(/\s*\(([^)]+)\)\s*$/);
+        if (trailingParenMatch && !/^\d+\s*(oz|g|ml|lb)/i.test(trailingParenMatch[1])) {
+          note = trailingParenMatch[1].trim();
+          line = line.slice(0, trailingParenMatch.index).trim();
+        }
+        const qtyRegex = /^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+(?:\.\d+)?(?:\s*(?:-|–|to)\s*\d+(?:\.\d+)?)?)\s*(.*)$/i;
+        const qtyMatch = line.match(qtyRegex);
+        let remainder = line;
+        if (qtyMatch) {
+          amount = qtyMatch[1].replace(/\s+/g, ' ').trim();
+          remainder = qtyMatch[2].trim();
+        } else if (/^(a|an)\s+/i.test(line)) {
+          const wordMatch = line.match(/^(a|an)\s+(pinch|dash|handful|bunch|clove|sprig|slice|can|jar|package|head|piece)\b\s*(.*)$/i);
+          if (wordMatch) {
+            amount = '1';
+            unit = wordMatch[2].toLowerCase();
+            remainder = wordMatch[3].replace(/^of\s+/i, '').trim();
+          }
+        }
+        if (!unit && remainder) {
+          const parenCanMatch = remainder.match(/^(\(\d+[^)]*\)\s*(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)|(?:cans?|jars?|packages?|pkgs?|boxes?|bags?)\s*\(\d+[^)]*\))\s+(.*)$/i);
+          if (parenCanMatch) {
+            unit = parenCanMatch[1].trim();
+            remainder = parenCanMatch[2].trim();
+          } else {
+            const tokens = remainder.split(/\s+/);
+            const firstTwo = tokens.slice(0, 2).join(' ').toLowerCase().replace(/[.,]$/, '');
+            const firstOne = tokens[0].toLowerCase().replace(/[.,]$/, '');
+            if (KNOWN_UNITS.has(firstTwo)) {
+              unit = tokens.slice(0, 2).join(' ').replace(/[.,]$/, '');
+              remainder = tokens.slice(2).join(' ').trim();
+            } else if (KNOWN_UNITS.has(firstOne)) {
+              unit = tokens[0].replace(/[.,]$/, '');
+              remainder = tokens.slice(1).join(' ').trim();
+            }
+          }
+          remainder = remainder.replace(/^of\s+/i, '').trim();
+        } else if (!amount && remainder) {
+          const stuckMatch = remainder.match(/^(\d+(?:\.\d+)?)(g|kg|mg|ml|l|oz|lb|lbs|tbsp|tsp|c)\b\.?\s+(.*)$/i);
+          if (stuckMatch) {
+            amount = stuckMatch[1];
+            unit = stuckMatch[2];
+            remainder = stuckMatch[3].replace(/^of\s+/i, '').trim();
+          }
+        }
+        const commaIdx = remainder.indexOf(',');
+        if (commaIdx !== -1) {
+          item = remainder.slice(0, commaIdx).trim();
+          const commaNote = remainder.slice(commaIdx + 1).trim();
+          note = note ? `${commaNote}; ${note}` : commaNote;
+        } else {
+          item = remainder.trim();
+        }
+        if (!item && unit) {
+          item = unit;
+          unit = '';
+        }
+        return {
+          amount,
+          unit,
+          item: item || rawLine.trim(),
+          note
+        };
+      }
+
+      function looksLikeIngredientLine(line) {
+        const norm = normalizeUnicodeFractions(line)
+          .replace(/^[\s•‣⁃▪▫◦\*+\-–—☐☑✓✔]+/, '')
+          .trim();
+        if (!norm || norm.length > 130) return false;
+        if (/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*([a-zA-Z]+|\(\d+)/.test(norm)) {
+          if (/^\d+[.)]\s+[A-Z]/.test(line.trim())) {
+            const afterNum = line.trim().replace(/^\d+[.)]\s+/, '');
+            const firstWord = afterNum.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+            const cookingVerbs = new Set([
+              'preheat', 'heat', 'melt', 'whisk', 'mix', 'stir', 'combine', 'add', 'pour',
+              'bake', 'cook', 'roast', 'fry', 'saute', 'sauté', 'simmer', 'boil', 'bring',
+              'place', 'put', 'set', 'prepare', 'line', 'grease', 'butter', 'spray', 'season',
+              'chop', 'dice', 'slice', 'mince', 'peel', 'cut', ' grate', 'drain', 'rinse',
+              'transfer', 'remove', 'serve', 'garnish', 'top', 'let', 'allow', 'cover',
+              'reduce', 'turn', 'flip', 'fold', 'beat', 'cream', 'knead', 'roll', 'chill',
+              'refrigerate', 'freeze', 'marinate', 'toss', 'coat', 'brush', 'grill', 'broil', 'in'
+            ]);
+            if (cookingVerbs.has(firstWord) || afterNum.length > 90) {
+              return false;
+            }
+          }
+          return true;
+        }
+        if (/^(a\s+pinch|a\s+dash|a\s+handful|salt\s+and\s+pepper|kosher\s+salt|sea\s+salt|freshly\s+ground|to\s+taste|cooking\s+spray|olive\s+oil)/i.test(norm)) {
+          return true;
+        }
+        return false;
+      }
+
+      function parseCopiedRecipeText(rawText) {
+        const result = {
+          title: '', prepMins: null, cookMins: null, servings: null,
+          sourceUrl: '', story: '', ingredients: [], steps: []
+        };
+        if (!rawText || !String(rawText).trim()) return result;
+
+        const source = String(rawText).replace(/\r/g, '').trim();
+        // Recipe websites commonly embed a machine-readable Recipe object in JSON-LD.
+        const jsonLdMatch = source.match(/<script[^>]*type=[\"']application\/ld\+json[\"'][^>]*>([\s\S]*?)<\/script>/i);
+        if (jsonLdMatch) {
+          try {
+            const structured = JSON.parse(jsonLdMatch[1].trim());
+            const graphItems = Array.isArray(structured) ? structured : [structured];
+            for (const entry of graphItems) {
+              const graph = entry && Array.isArray(entry['@graph']) ? entry['@graph'] : [entry];
+              const recipe = graph.find(item => [].concat(item && item['@type'] || []).some(type => String(type).toLowerCase() === 'recipe'));
+              if (recipe) {
+                result.title = String(recipe.name || '').trim();
+                result.prepMins = recipe.prepTime ? parseDurationToMinutes(recipe.prepTime) : null;
+                result.cookMins = recipe.cookTime ? parseDurationToMinutes(recipe.cookTime) : null;
+                result.servings = parseInt(([].concat(recipe.recipeYield || [])[0] || '').toString().match(/\d+/)?.[0] || '', 10) || null;
+                result.sourceUrl = recipe.url || '';
+                result.story = String(recipe.description || '').trim();
+                result.ingredients = [].concat(recipe.recipeIngredient || []).map(parseSingleIngredientLine).filter(Boolean);
+                const flatten = value => !value ? [] : typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(flatten) : value.text ? [String(value.text)] : value.itemListElement ? flatten(value.itemListElement) : [];
+                result.steps = flatten(recipe.recipeInstructions).map(step => ({ instruction: String(step).replace(/<[^>]+>/g, ' ').trim(), tip: '' })).filter(step => step.instruction);
+                if (result.ingredients.length || result.steps.length) return result;
+              }
+            }
+          } catch (_) { /* Fall back to the pasted text parser. */ }
+        }
+        const cleanText = source
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/gi, ' ')
+          .replace(/&amp;/gi, '&')
+          .replace(/&quot;/gi, '"')
+          .replace(/&#39;|&apos;/gi, "'");
+
+        const isoDuration = value => {
+          if (!value) return null;
+          const match = String(value).match(/^PT(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?$/i);
+          if (!match) return parseDurationToMinutes(String(value));
+          return Math.round((Number(match[1] || 0) * 60) + Number(match[2] || 0));
+        };
+        const flattenInstructions = value => {
+          if (!value) return [];
+          if (typeof value === 'string') return [value];
+          if (Array.isArray(value)) return value.flatMap(flattenInstructions);
+          if (typeof value === 'object') {
+            if (value.text) return [String(value.text)];
+            if (value.name && value.itemListElement) return flattenInstructions(value.itemListElement);
+            if (value.itemListElement) return flattenInstructions(value.itemListElement);
+          }
+          return [];
+        };
+        const recipeFromJson = data => {
+          const candidates = Array.isArray(data) ? data : [data];
+          for (const entry of candidates) {
+            if (!entry || typeof entry !== 'object') continue;
+            const graph = Array.isArray(entry['@graph']) ? entry['@graph'] : [entry];
+            for (const item of graph) {
+              const types = [].concat(item && item['@type'] || []).map(t => String(t).toLowerCase());
+              if (!types.includes('recipe')) continue;
+              result.title = String(item.name || '').trim();
+              result.prepMins = isoDuration(item.prepTime);
+              result.cookMins = isoDuration(item.cookTime);
+              result.servings = parseInt(([].concat(item.recipeYield || [])[0] || '').toString().match(/\d+/)?.[0] || '', 10) || null;
+              result.sourceUrl = item.url || result.sourceUrl;
+              result.story = String(item.description || '').trim();
+              result.ingredients = [].concat(item.recipeIngredient || []).map(parseSingleIngredientLine).filter(Boolean);
+              result.steps = flattenInstructions(item.recipeInstructions).map(text => ({ instruction: String(text).replace(/<[^>]+>/g, ' ').trim(), tip: '' })).filter(step => step.instruction);
+              return true;
+            }
+          }
+          return false;
+        };
+
+        // If the user pasted raw JSON-LD or a JSON recipe object, use its structured fields.
+        try {
+          const jsonStart = cleanText.indexOf('{');
+          const jsonEnd = cleanText.lastIndexOf('}');
+          if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            const candidate = JSON.parse(cleanText.slice(jsonStart, jsonEnd + 1));
+            if (recipeFromJson(candidate) && (result.ingredients.length || result.steps.length)) return result;
+          }
+        } catch (_) { /* Continue with plain-text parsing. */ }
+
+        const lines = cleanText.split('\n')
+          .map(line => line.replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+        const urlMatch = source.match(/https?:\/\/[^\s)\]>]+/i);
+        if (urlMatch) result.sourceUrl = urlMatch[0].replace(/[.,]+$/, '');
+
+        const ingredientHeading = /^(?:ingredients?|what you(?:'ll| will)? need|you will need|shopping list|for the ingredients?)\s*(?:\([^)]*\))?\s*:?[\s]*$/i;
+        const stepHeading = /^(?:instructions?|directions?|method|steps?|preparation|how to make(?: it)?|cooking instructions?)\s*:?[\s]*$/i;
+        const noteHeading = /^(?:notes?|tips?|recipe notes?|chef'?s notes?|cook'?s notes?|storage|nutrition(?:al)? (?:info|information|facts?))\s*:?[\s]*$/i;
+        const metaLabels = /^(?:prep(?:aration)?(?: time)?|cook(?:ing)?(?: time)?|total time|ready in|hands[- ]on time|inactive time|servings?|serves|yield|makes|course|cuisine|author|calories)\s*:?\s*(.*)$/i;
+        const isBoilerplate = line => /^(?:print recipe|pin recipe|jump to recipe|save recipe|rate this recipe|share this recipe|advertisement|ingredients and instructions|nutrition facts?)$/i.test(line);
+        const isNumberedStep = line => /^(?:step\s*\d+|\d{1,2}[.)])\s+\S/i.test(line);
+        const isStepLike = line => {
+          const text = line.replace(/^(?:step\s*\d+|\d{1,2}[.)])\s*/i, '').trim();
+          return /^(?:preheat|heat|melt|whisk|mix|stir|combine|add|pour|bake|cook|roast|fry|saute|sauté|simmer|boil|bring|place|put|set|prepare|line|grease|season|chop|dice|slice|mince|peel|cut|drain|rinse|transfer|remove|serve|garnish|top|let|allow|cover|reduce|turn|flip|fold|beat|cream|knead|roll|chill|refrigerate|freeze|marinate|toss|coat|brush|grill|broil)\b/i.test(text);
+        };
+
+        let section = 'HEADER';
+        const header = [], ingredientLines = [], stepLines = [], noteLines = [];
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (ingredientHeading.test(line)) { section = 'INGREDIENTS'; continue; }
+          if (stepHeading.test(line)) { section = 'STEPS'; continue; }
+          if (noteHeading.test(line)) { section = 'NOTES'; continue; }
+          if (isBoilerplate(line) || /^https?:\/\/\S+$/i.test(line)) continue;
+
+          const meta = line.match(metaLabels);
+          if (meta) {
+            const label = line.match(metaLabels)[0].split(':')[0].toLowerCase().replace(/\s+/g, ' ').trim();
+            const value = meta[1] || (i + 1 < lines.length ? lines[i + 1] : '');
+            if (/prep/.test(label)) result.prepMins = parseDurationToMinutes(value);
+            else if (/cook/.test(label)) result.cookMins = parseDurationToMinutes(value);
+            else if (/serv|yield|makes/.test(label)) result.servings = parseInt(String(value).match(/\d+/)?.[0] || '', 10) || null;
+            if (!meta[1] && value === lines[i + 1]) i++;
+            continue;
+          }
+          const inlinePrep = line.match(/(?:prep(?:aration)?(?: time)?)\s*[:\-]?\s*(\d+(?:\.\d+)?\s*(?:hours?|hrs?|hr|h|minutes?|mins?|min|m))/i);
+          const inlineCook = line.match(/(?:cook(?:ing)?(?: time)?)\s*[:\-]?\s*(\d+(?:\.\d+)?\s*(?:hours?|hrs?|hr|h|minutes?|mins?|min|m))/i);
+          const inlineServings = line.match(/(?:serves?|servings?|yield|makes)\s*[:\-]?\s*(\d+)/i);
+          if (inlinePrep) result.prepMins = parseDurationToMinutes(inlinePrep[1]);
+          if (inlineCook) result.cookMins = parseDurationToMinutes(inlineCook[1]);
+          if (inlineServings) result.servings = parseInt(inlineServings[1], 10);
+          if (inlinePrep || inlineCook || inlineServings || /^total time\b/i.test(line)) continue;
+
+          if (section === 'INGREDIENTS') ingredientLines.push(line);
+          else if (section === 'STEPS') stepLines.push(line);
+          else if (section === 'NOTES') noteLines.push(line);
+          else header.push(line);
+        }
+
+        // Title and optional introduction are taken from the pre-recipe header.
+        const usefulHeader = header.filter(line => !metaLabels.test(line) && !/^https?:\/\//i.test(line));
+        if (usefulHeader.length) {
+          result.title = usefulHeader[0].replace(/^#+\s*/, '').replace(/^recipe\s*[:\-]\s*/i, '').trim();
+          if (usefulHeader.length > 1) result.story = usefulHeader.slice(1).filter(line => line.length > 20 && !isStepLike(line)).join(' ').trim();
+        }
+
+        // Fallback for pasted recipes without section labels. Separate likely ingredients from directions.
+        if (!ingredientLines.length && !stepLines.length && usefulHeader.length > 1) {
+          let foundIngredients = false;
+          for (const line of usefulHeader.slice(1)) {
+            if (!foundIngredients && looksLikeIngredientLine(line)) {
+              foundIngredients = true;
+              ingredientLines.push(line);
+            } else if (foundIngredients && (looksLikeIngredientLine(line) || ingredientLines.length < 2)) {
+              ingredientLines.push(line);
+            } else if (foundIngredients || isNumberedStep(line) || isStepLike(line)) {
+              stepLines.push(line);
+            }
+          }
+          if (!ingredientLines.length) {
+            const likelyIngredients = usefulHeader.slice(1).filter(looksLikeIngredientLine);
+            ingredientLines.push(...likelyIngredients);
+            stepLines.push(...usefulHeader.slice(1).filter(line => !likelyIngredients.includes(line)));
+          }
+        }
+
+        ingredientLines.forEach(line => {
+          const cleaned = line.replace(/^[•‣⁃▪▫◦*+\-–—☐☑✓✔]+\s*/, '').trim();
+          if (!cleaned || /^(?:for the .+|.+):$/i.test(cleaned)) return;
+          const parsed = parseSingleIngredientLine(cleaned);
+          if (parsed && (parsed.item || parsed.amount)) result.ingredients.push(parsed);
+        });
+
+        const combinedStepText = stepLines.join('\n');
+        const normalizedStepLines = combinedStepText
+          .split(/\n+/)
+          .map(line => line.trim())
+          .filter(Boolean);
+        for (let i = 0; i < normalizedStepLines.length; i++) {
+          let line = normalizedStepLines[i].replace(/^(?:step\s*\d+\s*[:.\-)]?\s*|\d{1,2}\s*[.)\-:]\s*|[•‣⁃▪▫◦*+\-–—]\s*)/i, '').trim();
+          if (!line) continue;
+          let tip = '';
+          const inlineTip = line.match(/\s*(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+          if (inlineTip && inlineTip.index > 8) {
+            tip = inlineTip[1].trim();
+            line = line.slice(0, inlineTip.index).trim();
+          } else if (i + 1 < normalizedStepLines.length) {
+            const nextTip = normalizedStepLines[i + 1].match(/^(?:💡\s*)?(?:chef'?s?\s*tip|kitchen\s*tip|pro\s*tip|tip|note)\s*:\s*(.+)$/i);
+            if (nextTip) { tip = nextTip[1].trim(); i++; }
+          }
+          if (line) result.steps.push({ instruction: line, tip });
+        }
+
+        if (noteLines.length && result.steps.length) {
+          const notes = noteLines.map(line => line.replace(/^[•*\-]\s*/, '').trim()).filter(Boolean).join(' ');
+          const lastStep = result.steps[result.steps.length - 1];
+          if (notes) lastStep.tip = [lastStep.tip, notes].filter(Boolean).join(' ');
+        } else if (noteLines.length && !result.story) {
+          result.story = noteLines.join(' ');
+        }
+        return result;
+      }
+
+      // Firestore Real-Time Database Connection
+      function loadState() {
+        if (recipesUnsubscribe) return;
+        recipesUnsubscribe = db.collection("recipes").onSnapshot((snapshot) => {
+          recipes = [];
+          if (snapshot.empty) {
+            renderAll();
+            return;
+          }
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            recipes.push({
+              id: doc.id,
+              ...data,
+              mealType: normalizeMealType(data.mealType || data.timeOfDay)
+            });
+          });
+          renderAll();
+        }, (error) => {
+          console.error("Firestore loading error: ", error);
+        });
+
+        metadataUnsubscribe = db.collection("metadata").doc("cookbookSettings").onSnapshot((doc) => {
+          if (doc.exists) {
+            cookbookMeta = doc.data();
+            renderHeaderMeta();
+          }
+        });
+      }
+
+      function saveMeta() {
+        db.collection("metadata").doc("cookbookSettings").set({
+          ...cookbookMeta,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+          .catch(err => console.error("Error saving metadata: ", err));
+      }
+
+      function renderHeaderMeta() {
+        document.getElementById('cookbookHeaderTitle').textContent = cookbookMeta.title;
+        document.getElementById('cookbookHeaderSubtitle').textContent = cookbookMeta.subtitle;
+      }
+
+      function renderFilterSidebar() {
+        const existingMealTypes = new Set(recipes.map(r => normalizeMealType(r.mealType || r.timeOfDay)).filter(Boolean));
+        const extraMealTypes = Array.from(existingMealTypes).filter(m => !MEAL_TYPES_ORDER.includes(m)).sort();
+        const mealTypeList = ['ALL', ...MEAL_TYPES_ORDER, ...extraMealTypes];
+        const origins = ['ALL', ...new Set(recipes.map(r => r.origin).filter(Boolean))].sort((a, b) => a === 'ALL' ? -1 : b === 'ALL' ? 1 : a.localeCompare(b));
+        const courses = ['ALL', ...new Set(recipes.map(r => r.course).filter(Boolean))];
+        const allTagsSet = new Set();
+        recipes.forEach(r => {
+          (r.tags || []).forEach(t => {
+            if (t && t.trim()) allTagsSet.add(t.trim());
+          });
+        });
+        const tags = ['ALL', ...Array.from(allTagsSet).sort()];
+
+        buildChipGroup('filterMealType', mealTypeList, activeFilters.mealType, (val) => {
+          activeFilters.mealType = val;
+          renderAll();
+        });
+        buildChipGroup('filterOrigin', origins, activeFilters.origin, (val) => {
+          activeFilters.origin = val;
+          renderAll();
+        });
+        buildChipGroup('filterCourse', courses, activeFilters.course, (val) => {
+          activeFilters.course = val;
+          renderAll();
+        });
+        buildChipGroup('filterTags', tags, activeFilters.tag, (val) => {
+          activeFilters.tag = val;
+          renderAll();
+        });
+
+        const quickChip = document.getElementById('chipQuickMeals');
+        quickChip.classList.toggle('active', activeFilters.quickOnly);
+        quickChip.setAttribute('aria-pressed', String(activeFilters.quickOnly));
+      }
+
+      function buildChipGroup(containerId, items, activeValue, onSelect) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        items.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'chip' + (activeValue === item ? ' active' : '');
+          button.textContent = item === 'ALL' ? 'All' : item;
+          button.setAttribute('aria-pressed', String(activeValue === item));
+          button.addEventListener('click', () => onSelect(item));
+          container.appendChild(button);
+        });
+      }
+
+      function getFilteredRecipes() {
+        const q = activeFilters.search.trim().toLowerCase();
+        const filtered = recipes.filter(r => {
+          const itemMealType = normalizeMealType(r.mealType || r.timeOfDay);
+          if (activeFilters.mealType !== 'ALL' && itemMealType !== activeFilters.mealType) return false;
+          if (activeFilters.origin !== 'ALL' && r.origin !== activeFilters.origin) return false;
+          if (activeFilters.course !== 'ALL' && r.course !== activeFilters.course) return false;
+          if (activeFilters.tag !== 'ALL' && !(r.tags || []).includes(activeFilters.tag)) return false;
+          const totalTime = (Number(r.prepMins) || 0) + (Number(r.cookMins) || 0);
+          if (activeFilters.quickOnly && totalTime > 30) return false;
+          if (q) {
+            const haystack = [
+              r.title,
+              r.origin,
+              itemMealType,
+              r.course,
+              r.story,
+              r.myAdjustments,
+              ...(r.tags || []),
+              ...(r.ingredients || []).map(i => i.item + ' ' + (i.note || ''))
+            ].join(' ').toLowerCase();
+            if (!haystack.includes(q)) return false;
+          }
+          return true;
+        });
+
+        filtered.sort((a, b) => {
+          switch (activeFilters.sortBy) {
+            case 'mealType': {
+              const mtA = normalizeMealType(a.mealType || a.timeOfDay);
+              const mtB = normalizeMealType(b.mealType || b.timeOfDay);
+              const idxA = MEAL_TYPES_ORDER.indexOf(mtA);
+              const idxB = MEAL_TYPES_ORDER.indexOf(mtB);
+              const rankA = idxA === -1 ? 999 : idxA;
+              const rankB = idxB === -1 ? 999 : idxB;
+              if (rankA !== rankB) return rankA - rankB;
+              return (a.title || '').localeCompare(b.title || '');
+            }
+            case 'origin':
+              return (a.origin || '').localeCompare(b.origin || '') || a.title.localeCompare(b.title);
+            case 'prepTime': {
+              const tA = (Number(a.prepMins) || 0) + (Number(a.cookMins) || 0);
+              const tB = (Number(b.prepMins) || 0) + (Number(b.cookMins) || 0);
+              return tA - tB;
+            }
+            case 'recent':
+              return toEpochMillis(b.updatedAt) - toEpochMillis(a.updatedAt);
+            case 'title-asc':
+            default:
+              return (a.title || '').localeCompare(b.title || '');
+          }
+        });
+        return filtered;
+      }
+
+      function renderRecipeGrid() {
+        const grid = document.getElementById('recipeGrid');
+        const countEl = document.getElementById('resultsCountText');
+        const list = getFilteredRecipes();
+        countEl.textContent = `Showing ${list.length} of ${recipes.length} family recipe${recipes.length === 1 ? '' : 's'}`;
+        grid.innerHTML = '';
+
+        if (list.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.style.gridColumn = '1 / -1';
+          empty.innerHTML = `
+            <h3>No recipes match your current filters</h3>
+            <p>Try clearing your filters or creating a new family classic recipe.</p>
+            <button type="button" class="btn btn-primary" id="btnEmptyReset">Reset All Filters</button>
+          `;
+          grid.appendChild(empty);
+          const resetBtn = document.getElementById('btnEmptyReset');
+          if (resetBtn) {
+            resetBtn.addEventListener('click', resetAllFilters);
+          }
+          return;
+        }
+
+        list.forEach(recipe => {
+          const card = document.createElement('article');
+          card.className = 'recipe-card';
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+          card.setAttribute('aria-label', `View recipe: ${recipe.title || 'Untitled recipe'}`);
+          const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
+          const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
+          card.innerHTML = `
+            <div class="card-banner"></div>
+            <div class="card-body">
+              <div class="card-badges">
+                <span class="badge badge-meal">${escapeHtml(currentMeal)}</span>
+                <span class="badge badge-origin">${escapeHtml(recipe.origin || 'Heirloom')}</span>
+                <span class="badge badge-course">${escapeHtml(recipe.course)}</span>
+              </div>
+              <h3 class="card-title">${escapeHtml(recipe.title)}</h3>
+              <p class="card-desc">${escapeHtml(recipe.story || recipe.myAdjustments || 'Click to view full ingredients, steps, and family cooking adjustments.')}</p>
+              <p style="font-size:.8rem; color:var(--text-muted); margin:0 0 .65rem;">Submitted by: ${escapeHtml(recipe.submittedByName || 'Family Recipe')}</p>
+              <div class="card-meta">
+                <span>⏱️ ${totalMins} mins • 🍽️ Serves ${escapeHtml(recipe.servings)}</span>
+                <button type="button" class="favorite-btn ${isRecipeFavorited(recipe.id) ? 'active' : ''}" title="Toggle My Favorite" aria-label="Toggle favorite" aria-pressed="${isRecipeFavorited(recipe.id)}">
+                  ${isRecipeFavorited(recipe.id) ? '♥' : '♡'}
+                </button>
+              </div>
+            </div>
+          `;
+          const favBtn = card.querySelector('.favorite-btn');
+          favBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFavorite(recipe.id);
+          });
+          card.addEventListener('click', () => {
+            openRecipeDetail(recipe.id);
+          });
+          card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openRecipeDetail(recipe.id);
+            }
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      function renderAll() {
+        renderHeaderMeta();
+        renderFilterSidebar();
+        renderRecipeGrid();
+      }
+
+      function resetAllFilters() {
+        activeFilters.search = '';
+        activeFilters.mealType = 'ALL';
+        activeFilters.origin = 'ALL';
+        activeFilters.course = 'ALL';
+        activeFilters.tag = 'ALL';
+        activeFilters.quickOnly = false;
+        document.getElementById('searchInput').value = '';
+        renderAll();
+      }
+
+      function openRecipeDetail(recipeId) {
+        const recipe = recipes.find(r => r.id === recipeId);
+        if (!recipe) return;
+        currentViewingRecipeId = recipe.id;
+        currentScaleMultiplier = 1;
+        renderRecipeDetailContent(recipe);
+        document.getElementById('detailModal').classList.add('open');
+      }
+
+      function renderRecipeDetailContent(recipe) {
+        document.getElementById('detailModalTitle').textContent = recipe.title;
+        const body = document.getElementById('detailModalBody');
+        const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
+        const scaledServings = Math.max(1, Math.round((Number(recipe.servings) || 4) * currentScaleMultiplier));
+        const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
+        const tagsHtml = (recipe.tags || []).map(t => `<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>`).join(' ');
+        const safeSourceUrl = safeHttpUrl(recipe.sourceUrl);
+        let storyHtml = '';
+        if (recipe.story && recipe.story.trim()) {
+          storyHtml = `<div class="detail-story">“${escapeHtml(recipe.story)}”</div>`;
+        }
+        let adjustmentsHtml = '';
+        if (recipe.myAdjustments && recipe.myAdjustments.trim()) {
+          adjustmentsHtml = `
+            <div class="family-notes-box">
+              <h4>👩‍🍳 How I Actually Cook It (Family Modifications)</h4>
+              <p>${escapeHtml(recipe.myAdjustments)}</p>
+              ${safeSourceUrl ? `<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeSourceUrl)}</a></p>` : ''}
+            </div>
+          `;
+        } else if (safeSourceUrl) {
+          adjustmentsHtml = `
+            <div class="family-notes-box">
+              <h4>🔗 Reference Link</h4>
+              <p style="font-size:0.85rem;"><a href="${escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeSourceUrl)}</a></p>
+            </div>
+          `;
+        }
+        body.innerHTML = `
+          <div class="detail-header">
+            <div class="card-badges" style="margin-bottom:0.5rem;">
+              <span class="badge badge-meal">${escapeHtml(currentMeal)}</span>
+              <span class="badge badge-origin">${escapeHtml(recipe.origin || 'Heirloom')}</span>
+              <span class="badge badge-course">${escapeHtml(recipe.course)}</span>
+            </div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">${tagsHtml}</div>
+            <p style="font-size:.85rem; color:var(--text-muted); margin-top:.85rem;">Submitted by: ${escapeHtml(recipe.submittedByName || 'Family Recipe')}</p>
+          </div>
+          ${storyHtml}
+          <div class="detail-meta-bar">
+            <div class="meta-item">
+              <span class="meta-label">Prep Time</span>
+              <span class="meta-value">${Number(recipe.prepMins) || 0} mins</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Cook Time</span>
+              <span class="meta-value">${Number(recipe.cookMins) || 0} mins</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Total Time</span>
+              <span class="meta-value">${totalMins} mins</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Yield / Servings</span>
+              <span class="meta-value">${scaledServings} servings</span>
+            </div>
+          </div>
+          <div class="detail-columns">
+            <div>
+              <div class="section-heading">
+                <span>Ingredients</span>
+                <div class="scale-buttons">
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 0.5 ? 'active' : ''}" data-scale="0.5" aria-pressed="${currentScaleMultiplier === 0.5}">½×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 1 ? 'active' : ''}" data-scale="1" aria-pressed="${currentScaleMultiplier === 1}">1×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 2 ? 'active' : ''}" data-scale="2" aria-pressed="${currentScaleMultiplier === 2}">2×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 3 ? 'active' : ''}" data-scale="3" aria-pressed="${currentScaleMultiplier === 3}">3×</button>
+                </div>
+              </div>
+              <ul class="ingredient-list" id="detailIngredientList"></ul>
+            </div>
+            <div>
+              <div class="section-heading">
+                <span>Step-by-Step Directions</span>
+                <span style="font-size:0.78rem; color:var(--text-muted); font-family:var(--font-sans);">Click step number to mark complete</span>
+              </div>
+              <ol class="step-list" id="detailStepList"></ol>
+            </div>
+          </div>
+          ${adjustmentsHtml}
+        `;
+        body.querySelectorAll('.scale-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            currentScaleMultiplier = parseFloat(btn.getAttribute('data-scale')) || 1;
+            renderRecipeDetailContent(recipe);
+          });
+        });
+        const ingList = document.getElementById('detailIngredientList');
+        (recipe.ingredients || []).forEach((ing) => {
+          const li = document.createElement('li');
+          li.className = 'ingredient-item';
+          const scaledAmt = formatScaledAmount(ing.amount, currentScaleMultiplier);
+          const notePart = ing.note ? ` <em style="color:var(--text-muted);">(${escapeHtml(ing.note)})</em>` : '';
+          li.innerHTML = `
+            <input type="checkbox">
+            <span><strong>${escapeHtml(scaledAmt)} ${escapeHtml(ing.unit || '')}</strong> ${escapeHtml(ing.item || '')}${notePart}</span>
+          `;
+          const checkbox = li.querySelector('input[type="checkbox"]');
+          checkbox.addEventListener('change', () => {
+            li.classList.toggle('checked', checkbox.checked);
+          });
+          ingList.appendChild(li);
+        });
+        const stepList = document.getElementById('detailStepList');
+        (recipe.steps || []).forEach((st, idx) => {
+          const li = document.createElement('li');
+          li.className = 'step-item';
+          const tipHtml = st.tip && st.tip.trim()
+            ? `<div class="step-tip">💡 <strong>Parent / Kitchen Tip:</strong> ${escapeHtml(st.tip)}</div>`
+            : '';
+          li.innerHTML = `
+            <div class="step-number" title="Mark step done">${idx + 1}</div>
+            <div class="step-content">
+              <div class="step-text">${escapeHtml(st.instruction)}</div>
+              ${tipHtml}
+            </div>
+          `;
+          li.addEventListener('click', () => {
+            li.classList.toggle('completed');
+          });
+          stepList.appendChild(li);
+        });
+      }
+
+      function addIngredientEditorRow(data = { amount: '', unit: '', item: '', note: '' }) {
+        const container = document.getElementById('ingredientRowsContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-row';
+        row.innerHTML = `
+          <input type="text" class="text-input ing-amount" placeholder="Qty (1 1/2)" value="${escapeHtml(data.amount)}">
+          <input type="text" class="text-input ing-unit" placeholder="Unit (cup)" value="${escapeHtml(data.unit)}">
+          <input type="text" class="text-input ing-item" placeholder="Ingredient name *" value="${escapeHtml(data.item)}">
+          <input type="text" class="text-input ing-note" placeholder="Prep note (diced)" value="${escapeHtml(data.note)}">
+          <button type="button" class="btn btn-light btn-sm btn-remove-row" title="Remove Ingredient">✕</button>
+        `;
+        row.querySelector('.btn-remove-row').addEventListener('click', () => {
+          row.remove();
+        });
+        container.appendChild(row);
+      }
+
+      function addStepEditorRow(data = { instruction: '', tip: '' }) {
+        const container = document.getElementById('stepRowsContainer');
+        const row = document.createElement('div');
+        row.className = 'dynamic-step-row';
+        const stepIndex = container.children.length + 1;
+        row.innerHTML = `
+          <div class="step-number step-badge-num" style="cursor:default;">${stepIndex}</div>
+          <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            <textarea class="textarea-input step-instruction" rows="2" placeholder="Step-by-step direction...">${escapeHtml(data.instruction)}</textarea>
+            <input type="text" class="text-input step-tip-input" placeholder="💡 Optional tip (e.g. Watch closely so the garlic doesn't burn)" value="${escapeHtml(data.tip)}">
+          </div>
+          <button type="button" class="btn btn-light btn-sm btn-remove-step" title="Remove Step">✕</button>
+        `;
+        row.querySelector('.btn-remove-step').addEventListener('click', () => {
+          row.remove();
+          renumberStepEditorRows();
+        });
+        container.appendChild(row);
+      }
+
+      function renumberStepEditorRows() {
+        const container = document.getElementById('stepRowsContainer');
+        Array.from(container.children).forEach((row, idx) => {
+          const badge = row.querySelector('.step-badge-num');
+          if (badge) badge.textContent = idx + 1;
+        });
+      }
+
+      function setImporterExpanded(expanded) {
+        const box = document.getElementById('recipeImportBox');
+        const label = document.getElementById('importBoxToggleLabel');
+        if (!box || !label) return;
+        box.classList.toggle('expanded', Boolean(expanded));
+        label.textContent = expanded ? 'Hide Importer ▾' : 'Show Importer ▴';
+      }
+
+      function openEditorModal(recipeToEdit = null, expandImporter = false) {
+        const banner = document.getElementById('editorValidationBanner');
+        banner.className = 'status-banner';
+        banner.textContent = '';
+        document.getElementById('rawRecipePasteInput').value = '';
+        setImporterExpanded(expandImporter);
+        const heading = document.getElementById('editorModalHeading');
+        const ingContainer = document.getElementById('ingredientRowsContainer');
+        const stepContainer = document.getElementById('stepRowsContainer');
+        ingContainer.innerHTML = '';
+        stepContainer.innerHTML = '';
+        if (recipeToEdit) {
+          currentEditingRecipeId = recipeToEdit.id || null;
+          heading.textContent = 'Edit Family Recipe';
+          document.getElementById('editTitle').value = recipeToEdit.title || '';
+          document.getElementById('editMealType').value = normalizeMealType(recipeToEdit.mealType || recipeToEdit.timeOfDay);
+          document.getElementById('editOrigin').value = recipeToEdit.origin || '';
+          document.getElementById('editCourse').value = recipeToEdit.course || 'Main Dish';
+          document.getElementById('editServings').value = recipeToEdit.servings || 4;
+          document.getElementById('editPrepMins').value = recipeToEdit.prepMins ?? 15;
+          document.getElementById('editCookMins').value = recipeToEdit.cookMins ?? 30;
+          document.getElementById('editTags').value = (recipeToEdit.tags || []).join(', ');
+          document.getElementById('editStory').value = recipeToEdit.story || '';
+          document.getElementById('editMyAdjustments').value = recipeToEdit.myAdjustments || '';
+          document.getElementById('editSourceUrl').value = recipeToEdit.sourceUrl || '';
+          const ings = recipeToEdit.ingredients && recipeToEdit.ingredients.length
+            ? recipeToEdit.ingredients
+            : [{ amount: '', unit: '', item: '', note: '' }];
+          ings.forEach(i => addIngredientEditorRow(i));
+          const steps = recipeToEdit.steps && recipeToEdit.steps.length
+            ? recipeToEdit.steps
+            : [{ instruction: '', tip: '' }];
+          steps.forEach(s => addStepEditorRow(s));
+        } else {
+          currentEditingRecipeId = null;
+          heading.textContent = 'Add New Family Recipe';
+          document.getElementById('editTitle').value = '';
+          document.getElementById('editMealType').value = 'Dinner';
+          document.getElementById('editOrigin').value = '';
+          document.getElementById('editCourse').value = 'Main Dish';
+          document.getElementById('editServings').value = 4;
+          document.getElementById('editPrepMins').value = 15;
+          document.getElementById('editCookMins').value = 30;
+          document.getElementById('editTags').value = '';
+          document.getElementById('editStory').value = '';
+          document.getElementById('editMyAdjustments').value = '';
+          document.getElementById('editSourceUrl').value = '';
+          addIngredientEditorRow();
+          addIngredientEditorRow();
+          addIngredientEditorRow();
+          addStepEditorRow();
+          addStepEditorRow();
+        }
+        document.getElementById('editorModal').classList.add('open');
+        if (expandImporter) {
+          setTimeout(() => {
+            document.getElementById('rawRecipePasteInput').focus();
+          }, 50);
+        }
+      }
+
+      function handleRunRecipeParser() {
+        const rawText = document.getElementById('rawRecipePasteInput').value;
+        const banner = document.getElementById('editorValidationBanner');
+        if (!rawText || !rawText.trim()) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Please paste a copied recipe into the importer text box first.';
+          return;
+        }
+        const parsed = parseCopiedRecipeText(rawText);
+        if (parsed.ingredients.length === 0 && parsed.steps.length === 0) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Could not detect ingredients or instructions. Try including "Ingredients:" and "Instructions:" headings in your pasted text.';
+          return;
+        }
+        const titleInput = document.getElementById('editTitle');
+        if (parsed.title && !titleInput.value.trim()) {
+          titleInput.value = parsed.title;
+        }
+        if (parsed.prepMins !== null) {
+          document.getElementById('editPrepMins').value = parsed.prepMins;
+        }
+        if (parsed.cookMins !== null) {
+          document.getElementById('editCookMins').value = parsed.cookMins;
+        }
+        if (parsed.servings !== null) {
+          document.getElementById('editServings').value = parsed.servings;
+        }
+        if (parsed.sourceUrl && !document.getElementById('editSourceUrl').value.trim()) {
+          document.getElementById('editSourceUrl').value = parsed.sourceUrl;
+        }
+        if (parsed.story && !document.getElementById('editStory').value.trim()) {
+          document.getElementById('editStory').value = parsed.story;
+        }
+        if (parsed.ingredients.length > 0) {
+          const ingContainer = document.getElementById('ingredientRowsContainer');
+          ingContainer.innerHTML = '';
+          parsed.ingredients.forEach(ing => addIngredientEditorRow(ing));
+        }
+        if (parsed.steps.length > 0) {
+          const stepContainer = document.getElementById('stepRowsContainer');
+          stepContainer.innerHTML = '';
+          parsed.steps.forEach(st => addStepEditorRow(st));
+        }
+        setImporterExpanded(false);
+        banner.className = 'status-banner success';
+        banner.textContent = `✨ Imported ${parsed.ingredients.length} ingredient${parsed.ingredients.length === 1 ? '' : 's'} and ${parsed.steps.length} instruction step${parsed.steps.length === 1 ? '' : 's'}! Review below and click Save Recipe.`;
+      }
+
+      function saveRecipeFromEditor() {
+        const title = document.getElementById('editTitle').value.trim();
+        const origin = document.getElementById('editOrigin').value.trim() || '';
+        const banner = document.getElementById('editorValidationBanner');
+        if (!title) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Please provide a Recipe Name before saving.';
+          return;
+        }
+        const ingredients = [];
+        document.querySelectorAll('#ingredientRowsContainer .dynamic-row').forEach(row => {
+          const amount = row.querySelector('.ing-amount').value.trim();
+          const unit = row.querySelector('.ing-unit').value.trim();
+          const item = row.querySelector('.ing-item').value.trim();
+          const note = row.querySelector('.ing-note').value.trim();
+          if (item || amount) {
+            ingredients.push({ amount, unit, item: item || 'Ingredient', note });
+          }
+        });
+        const steps = [];
+        document.querySelectorAll('#stepRowsContainer .dynamic-step-row').forEach(row => {
+          const instruction = row.querySelector('.step-instruction').value.trim();
+          const tip = row.querySelector('.step-tip-input').value.trim();
+          if (instruction) {
+            steps.push({ instruction, tip });
+          }
+        });
+        if (ingredients.length === 0 || steps.length === 0) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Please add at least one ingredient and one direction step.';
+          return;
+        }
+        const tagsRaw = document.getElementById('editTags').value;
+        const tags = tagsRaw
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean);
+        const existingRecipe = currentEditingRecipeId
+          ? recipes.find(r => r.id === currentEditingRecipeId)
+          : null;
+        const selectedMealType = document.getElementById('editMealType').value;
+        const rawSourceUrl = document.getElementById('editSourceUrl').value.trim();
+        if (rawSourceUrl && !safeHttpUrl(rawSourceUrl)) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Source links must begin with http:// or https://.';
+          return;
+        }
+        const recipeObj = {
+          title,
+          passedDownBy: '',
+          mealType: selectedMealType,
+          timeOfDay: selectedMealType,
+          origin,
+          course: document.getElementById('editCourse').value,
+          servings: Math.max(1, parseInt(document.getElementById('editServings').value, 10) || 4),
+          prepMins: Math.max(0, parseInt(document.getElementById('editPrepMins').value, 10) || 0),
+          cookMins: Math.max(0, parseInt(document.getElementById('editCookMins').value, 10) || 0),
+          tags,
+          submittedByUid: existingRecipe ? (existingRecipe.submittedByUid || '') : (auth.currentUser ? auth.currentUser.uid : ''),
+          submittedByName: existingRecipe ? (existingRecipe.submittedByName || 'Family Recipe') : (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
+          submittedAt: existingRecipe ? (existingRecipe.submittedAt || null) : firebase.firestore.FieldValue.serverTimestamp(),
+          story: document.getElementById('editStory').value.trim(),
+          myAdjustments: document.getElementById('editMyAdjustments').value.trim(),
+          sourceUrl: safeHttpUrl(document.getElementById('editSourceUrl').value),
+          lastEditedByUid: auth.currentUser ? auth.currentUser.uid : '',
+          lastEditedByName: auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          ingredients,
+          steps
+        };
+
+        if (existingRecipe) {
+          db.collection("recipes").doc(existingRecipe.id).set(recipeObj)
+            .then(() => {
+              document.getElementById('editorModal').classList.remove('open');
+            })
+            .catch(err => {
+              banner.className = 'status-banner error';
+              banner.textContent = "Database Error: " + err.message;
+            });
+        } else {
+          db.collection("recipes").add(recipeObj)
+            .then(() => {
+              document.getElementById('editorModal').classList.remove('open');
+            })
+            .catch(err => {
+              banner.className = 'status-banner error';
+              banner.textContent = "Database Error: " + err.message;
+            });
+        }
+      }
+
+      // =========================================================================
+      // BIND UI EVENTS
+      // =========================================================================
+      function bindEvents() {
+        // Sign In Events
+        document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
+        document.getElementById('btnForgotPassword').addEventListener('click', handleForgotPassword);
+        document.getElementById('btnCreateEmailAccount').addEventListener('click', handleEmailSignUp);
+        document.getElementById('btnGateSignOut').addEventListener('click', () => auth.signOut());
+        document.getElementById('btnManageFamily').addEventListener('click', () => document.getElementById('familyAccessModal').classList.add('open'));
+        document.getElementById('btnCloseFamilyAccess').addEventListener('click', () => document.getElementById('familyAccessModal').classList.remove('open'));
+        document.getElementById('familyAccessList').addEventListener('click', async (event) => {
+          const button = event.target.closest('[data-member-action]');
+          if (!button) return;
+          const memberId = button.dataset.memberId;
+          const status = button.dataset.memberAction === 'approve' ? 'approved' : 'revoked';
+          button.disabled = true;
+          try { await db.collection('authorizedMembers').doc(memberId).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
+          catch (error) { alert('Unable to update family access: ' + error.message); button.disabled = false; }
+        });
+        document.getElementById('familyPasswordInput').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') handleEmailAuth();
+        });
+        document.getElementById('btnSignOut').addEventListener('click', handleSignOut);
+        document.getElementById('btnAccount').addEventListener('click', () => {
+          document.getElementById('accountBanner').className = 'status-banner';
+          document.getElementById('accountBanner').textContent = '';
+          renderAccountModal();
+          document.getElementById('accountModal').classList.add('open');
+        });
+        document.getElementById('btnCloseAccount').addEventListener('click', () => document.getElementById('accountModal').classList.remove('open'));
+        document.getElementById('btnSaveDisplayName').addEventListener('click', saveDisplayName);
+        document.getElementById('btnChangePassword').addEventListener('click', changePassword);
+        document.getElementById('btnAccountSignOut').addEventListener('click', () => auth.signOut());
+        document.getElementById('myRecipesList').addEventListener('click', (event) => {
+          const button = event.target.closest('[data-account-recipe-id]');
+          if (!button) return;
+          document.getElementById('accountModal').classList.remove('open');
+          openRecipeDetail(button.dataset.accountRecipeId);
+        });
+        document.getElementById('myFavoritesList').addEventListener('click', (event) => {
+          const button = event.target.closest('[data-account-recipe-id]');
+          if (!button) return;
+          document.getElementById('accountModal').classList.remove('open');
+          openRecipeDetail(button.dataset.accountRecipeId);
+        });
+        document.querySelectorAll('[data-password-toggle]').forEach(button => {
+          button.addEventListener('click', () => {
+            const input = document.getElementById(button.dataset.passwordToggle);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            button.textContent = showing ? 'Show' : 'Hide';
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+          });
+        });
+
+        // Filters & Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+          activeFilters.search = e.target.value;
+          renderRecipeGrid();
+        });
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+          activeFilters.sortBy = e.target.value;
+          renderRecipeGrid();
+        });
+        document.getElementById('chipQuickMeals').addEventListener('click', () => {
+          activeFilters.quickOnly = !activeFilters.quickOnly;
+          renderAll();
+        });
+        document.getElementById('btnResetFilters').addEventListener('click', resetAllFilters);
+
+        // Modals & Recipe Management
+        document.getElementById('btnNewRecipe').addEventListener('click', () => {
+          openEditorModal(null, false);
+        });
+        document.getElementById('btnQuickImportRecipe').addEventListener('click', () => {
+          openEditorModal(null, true);
+        });
+        document.getElementById('importBoxToggle').addEventListener('click', () => {
+          const box = document.getElementById('recipeImportBox');
+          setImporterExpanded(!box.classList.contains('expanded'));
+        });
+        document.getElementById('btnClearPasteInput').addEventListener('click', () => {
+          document.getElementById('rawRecipePasteInput').value = '';
+          document.getElementById('rawRecipePasteInput').focus();
+        });
+        document.getElementById('btnRunRecipeParser').addEventListener('click', handleRunRecipeParser);
+
+        // Dedication & Export
+        const headerTools = document.querySelector('.header-tools');
+        document.querySelectorAll('.header-tools-menu .btn').forEach(button => {
+          button.addEventListener('click', () => { headerTools.open = false; });
+        });
+        document.getElementById('btnCustomizeBook').addEventListener('click', () => {
+          document.getElementById('bookTitleInput').value = cookbookMeta.title;
+          document.getElementById('bookSubtitleInput').value = cookbookMeta.subtitle;
+          document.getElementById('dedicationModal').classList.add('open');
+        });
+        document.getElementById('btnExportBook').addEventListener('click', () => {
+          const payload = {
+            backupSchemaVersion: 2,
+            cookbookMeta,
+            exportedAt: new Date().toISOString(),
+            recipes: recipes.map(recipe => ({
+              ...recipe,
+              submittedAt: toEpochMillis(recipe.submittedAt) || null,
+              updatedAt: toEpochMillis(recipe.updatedAt) || null
+            }))
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'family-heirloom-cookbook.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        });
+
+        const fileInput = document.getElementById('fileRestoreInput');
+        document.getElementById('btnTriggerRestore').addEventListener('click', () => {
+          fileInput.click();
+        });
+        function prepareRestoreRecipe(raw, user) {
+          if (!raw || typeof raw !== 'object' || typeof raw.title !== 'string' || !raw.title.trim()) {
+            throw new Error('Each restored recipe must have a title.');
+          }
+          if (!Array.isArray(raw.ingredients) || !Array.isArray(raw.steps)) {
+            throw new Error(`Recipe "${raw.title}" is missing ingredients or directions.`);
+          }
+          const requestedId = typeof raw.id === 'string' ? raw.id : '';
+          const id = /^[A-Za-z0-9_-]{20,128}$/.test(requestedId)
+            ? requestedId
+            : db.collection('recipes').doc().id;
+          const sourceUrl = safeHttpUrl(raw.sourceUrl || '');
+          if (raw.sourceUrl && !sourceUrl) throw new Error(`Recipe "${raw.title}" has an unsafe source URL.`);
+          return {
+            id,
+            data: {
+              title: raw.title.trim().slice(0, 160),
+              mealType: normalizeMealType(raw.mealType || raw.timeOfDay),
+              timeOfDay: normalizeMealType(raw.mealType || raw.timeOfDay),
+              origin: String(raw.origin || '').slice(0, 80),
+              course: String(raw.course || 'Main Dish').slice(0, 80),
+              servings: Math.max(1, Math.min(100, Number(raw.servings) || 4)),
+              prepMins: Math.max(0, Number(raw.prepMins) || 0),
+              cookMins: Math.max(0, Number(raw.cookMins) || 0),
+              tags: Array.isArray(raw.tags) ? raw.tags.map(tag => String(tag).trim()).filter(Boolean).slice(0, 30) : [],
+              story: String(raw.story || '').slice(0, 4000),
+              myAdjustments: String(raw.myAdjustments || '').slice(0, 4000),
+              sourceUrl,
+              ingredients: raw.ingredients.slice(0, 200),
+              steps: raw.steps.slice(0, 200),
+              submittedByUid: raw.submittedByUid || user.uid,
+              submittedByName: raw.submittedByName || user.displayName || user.email || 'Family Member',
+              submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              lastEditedByUid: user.uid,
+              lastEditedByName: user.displayName || user.email || 'Family Member',
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              restoredAt: firebase.firestore.FieldValue.serverTimestamp()
+            }
+          };
+        }
+
+        async function restoreBackupData(data) {
+          const user = auth.currentUser;
+          if (!user) throw new Error('Sign in before restoring a backup.');
+          if ((user.email || '').toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            throw new Error('Only the cookbook administrator can run a restore.');
+          }
+          const rawRecipes = Array.isArray(data) ? data : data && data.recipes;
+          if (!Array.isArray(rawRecipes) || !rawRecipes.length) throw new Error('This backup does not contain any recipes.');
+          if (rawRecipes.length > 1000) throw new Error('For safety, restore backups in groups of 1,000 recipes or fewer.');
+          const existingIds = new Set(recipes.map(recipe => recipe.id));
+          const prepared = rawRecipes.map(recipe => {
+            const preparedRecipe = prepareRestoreRecipe(recipe, user);
+            if (!existingIds.has(preparedRecipe.id)) {
+              preparedRecipe.data.submittedByUid = user.uid;
+              preparedRecipe.data.submittedByName = user.displayName || user.email || 'Family Member';
+            }
+            return preparedRecipe;
+          });
+          if (!confirm(`Restore ${prepared.length} recipe(s)? Recipes with matching backup IDs will be updated; others will be added. Download a current backup first if you want a rollback point.`)) return;
+          for (let start = 0; start < prepared.length; start += 400) {
+            const batch = db.batch();
+            prepared.slice(start, start + 400).forEach(recipe => {
+              batch.set(db.collection('recipes').doc(recipe.id), recipe.data, { merge: true });
+            });
+            await batch.commit();
+          }
+          if (data && data.cookbookMeta && typeof data.cookbookMeta === 'object') {
+            await db.collection('metadata').doc('cookbookSettings').set({
+              title: String(data.cookbookMeta.title || cookbookMeta.title).slice(0, 160),
+              subtitle: String(data.cookbookMeta.subtitle || '').slice(0, 1000)
+            }, { merge: true });
+          }
+          alert(`Restore complete: ${prepared.length} recipe(s) were processed.`);
+        }
+
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          if (file.size > 5 * 1024 * 1024) {
+            alert('This backup is larger than the 5 MB restore limit. Split it into smaller files and try again.');
+            fileInput.value = '';
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              await restoreBackupData(JSON.parse(reader.result));
+            } catch (err) {
+              alert('Restore was not completed: ' + (err.message || 'Please verify the backup file format.'));
+            }
+          };
+          reader.readAsText(file);
+          fileInput.value = '';
+        });
+
+        document.getElementById('btnCloseDetailModal').addEventListener('click', () => {
+          document.getElementById('detailModal').classList.remove('open');
+        });
+        document.getElementById('btnPrintRecipe').addEventListener('click', () => {
+          window.print();
+        });
+        document.getElementById('btnEditCurrentRecipe').addEventListener('click', () => {
+          const recipe = recipes.find(r => r.id === currentViewingRecipeId);
+          if (recipe) {
+            document.getElementById('detailModal').classList.remove('open');
+            openEditorModal(recipe, false);
+          }
+        });
+
+        // 🗑️ Delete Recipe (Available to all authorized family members)
+        document.getElementById('btnDeleteCurrentRecipe').addEventListener('click', () => {
+          const recipe = recipes.find(r => r.id === currentViewingRecipeId);
+          if (!recipe) return;
+
+          if (confirm(`Are you sure you want to permanently delete "${recipe.title}"?`)) {
+            db.collection("recipes").doc(currentViewingRecipeId).delete()
+              .then(() => {
+                document.getElementById('detailModal').classList.remove('open');
+              })
+              .catch(err => alert("Error deleting recipe: " + err.message));
+          }
+        });
+
+        document.getElementById('btnCloseEditorModal').addEventListener('click', () => {
+          document.getElementById('editorModal').classList.remove('open');
+        });
+        document.getElementById('btnCancelEditorFooter').addEventListener('click', () => {
+          document.getElementById('editorModal').classList.remove('open');
+        });
+        document.getElementById('btnAddIngredientRow').addEventListener('click', () => {
+          addIngredientEditorRow();
+        });
+        document.getElementById('btnAddStepRow').addEventListener('click', () => {
+          addStepEditorRow();
+        });
+        document.getElementById('btnSaveRecipe').addEventListener('click', saveRecipeFromEditor);
+
+        document.getElementById('btnCloseDedicationModal').addEventListener('click', () => {
+          document.getElementById('dedicationModal').classList.remove('open');
+        });
+        document.getElementById('btnSaveDedication').addEventListener('click', () => {
+          const newTitle = document.getElementById('bookTitleInput').value.trim();
+          const newSub = document.getElementById('bookSubtitleInput').value.trim();
+          if (newTitle) cookbookMeta.title = newTitle;
+          if (newSub) cookbookMeta.subtitle = newSub;
+          saveMeta();
+          document.getElementById('dedicationModal').classList.remove('open');
+        });
+
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+          backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) {
+              backdrop.classList.remove('open');
+            }
+          });
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            document.querySelectorAll('.modal-backdrop.open').forEach(modal => modal.classList.remove('open'));
+          }
+        });
+      }
+
+      // Initialize Application Events
+      bindEvents();
+    })();
