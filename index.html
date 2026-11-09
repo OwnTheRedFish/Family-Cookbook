@@ -83,54 +83,34 @@
       font-size: 0.9rem;
       margin-bottom: 1.5rem;
     }
-
-    /* Google Sign-in Button */
-    .btn-google {
-      background-color: #ffffff;
-      color: #3c4043;
-      border: 1px solid #dadce0;
-      font-weight: 600;
-      text-transform: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius-sm);
+    .password-field { position: relative; }
+    .password-field .text-input { padding-right: 4.8rem; }
+    .password-toggle {
+      position: absolute;
+      right: .45rem;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 0;
+      background: transparent;
+      color: var(--brand-primary);
       cursor: pointer;
-      font-size: 0.92rem;
-      transition: background-color 0.2s, box-shadow 0.2s;
-      box-shadow: 0 1px 2px rgba(60,64,67,0.1);
+      font-size: .78rem;
+      font-weight: 700;
+      padding: .4rem;
     }
-    .btn-google:hover {
-      background-color: #f8fafd;
-      box-shadow: 0 1px 3px rgba(60,64,67,0.2);
-    }
-    .google-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
+    .auth-link-row { margin-top: .8rem; text-align: center; }
+    .auth-link-btn { border: 0; background: transparent; color: var(--brand-primary); cursor: pointer; font: inherit; font-size: .86rem; text-decoration: underline; }
+    .account-section { padding: 1.15rem 0; border-bottom: 1px solid var(--border-color); }
+    .account-section:first-child { padding-top: 0; }
+    .account-section:last-child { border-bottom: 0; padding-bottom: 0; }
+    .account-section h3 { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: .8rem; }
+    .account-email { color: var(--text-muted); font-size: .92rem; margin: -.35rem 0 .85rem; }
+    .account-recipe-list { display: grid; gap: .55rem; }
+    .account-recipe-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .7rem; background: #f7f7f1; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
+    .account-recipe-row strong { display: block; }
+    .account-recipe-row span { color: var(--text-muted); font-size: .8rem; }
+    .account-empty { color: var(--text-muted); font-size: .9rem; }
 
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      text-align: center;
-      margin: 1.25rem 0;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .auth-divider::before, .auth-divider::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .auth-divider span {
-      padding: 0 0.75rem;
-    }
 
     /* Header & Banner */
     header {
@@ -1042,28 +1022,18 @@
   <div id="accessGateModal">
     <div class="gate-card">
       <h2>👪 Family Kitchen</h2>
-      <p>Sign in or create an account. New accounts require approval from the cookbook administrator.</p>
+      <p>Sign in with your email and password, or create an account. New accounts require approval from the cookbook administrator.</p>
       <div id="gateErrorBanner" class="status-banner"></div>
 
-      <!-- Option 1: Fast One-Click Google Sign-In -->
-      <button type="button" class="btn-google" id="btnGoogleSignIn">
-        <svg class="google-icon" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22c-.62-.62-1.07-1.37-1.42-2.18z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-        Sign in with Google
-      </button>
-
-      <div class="auth-divider"><span>or sign in with email</span></div>
-
-      <!-- Option 2: Email & Password Sign-In -->
       <form id="emailLoginForm" onsubmit="return false;">
         <input type="email" id="familyEmailInput" class="text-input" placeholder="Email address..." style="text-align: center; margin-bottom: 0.75rem;" autocomplete="username">
-        <input type="password" id="familyPasswordInput" class="text-input" placeholder="Password..." style="text-align: center; margin-bottom: 1rem;" autocomplete="current-password">
+        <div class="password-field" style="margin-bottom: 1rem;">
+          <input type="password" id="familyPasswordInput" class="text-input" placeholder="Password..." autocomplete="current-password">
+          <button type="button" class="password-toggle" data-password-toggle="familyPasswordInput" aria-label="Show password">Show</button>
+        </div>
         <button type="button" class="btn btn-primary" id="btnSubmitEmailAuth" style="width: 100%; justify-content: center;">Sign In</button>
         <button type="button" class="btn btn-outline" id="btnCreateEmailAccount" style="width: 100%; justify-content: center; margin-top:.65rem;">Create Account</button>
+        <div class="auth-link-row"><button type="button" class="auth-link-btn" id="btnForgotPassword">Forgot password?</button></div>
       </form>
       <button type="button" class="btn btn-light" id="btnGateSignOut" style="display:none; width:100%; justify-content:center; margin-top:.75rem;">Sign Out</button>
     </div>
@@ -1079,6 +1049,7 @@
         <span class="user-greeting" id="userGreetingText"></span>
         <button type="button" class="btn btn-primary" id="btnNewRecipe">＋ Add Recipe</button>
         <button type="button" class="btn btn-secondary" id="btnQuickImportRecipe">Paste &amp; Import</button>
+        <button type="button" class="btn btn-outline" id="btnAccount">My Account</button>
         <details class="header-tools">
           <summary aria-label="Open cookbook tools">Cookbook Tools <span aria-hidden="true">⌄</span></summary>
           <div class="header-tools-menu">
@@ -1133,7 +1104,6 @@
           <span>Quick Filters</span>
         </div>
         <div class="filter-chips">
-          <span class="chip" id="chipFavoritesOnly">❤️ Family Favorites</span>
           <span class="chip" id="chipQuickMeals">⚡ Under 30 Mins</span>
         </div>
       </div>
@@ -1342,6 +1312,55 @@
     </div>
   </div>
 
+
+  <!-- Account modal -->
+  <div class="modal-backdrop" id="accountModal">
+    <div class="modal-panel" style="max-width:760px;">
+      <div class="modal-header">
+        <h2>My Account</h2>
+        <button type="button" class="btn btn-light btn-sm" id="btnCloseAccount">✕ Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="accountBanner" class="status-banner"></div>
+        <section class="account-section">
+          <h3>Profile</h3>
+          <label for="accountDisplayName">Display name</label>
+          <input type="text" id="accountDisplayName" class="text-input" maxlength="80" placeholder="How your name appears on recipes">
+          <p class="account-email" id="accountEmailText"></p>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSaveDisplayName">Save Name</button>
+        </section>
+        <section class="account-section">
+          <h3>Change Password</h3>
+          <p class="account-email">For security, enter your current password before choosing a new one.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="currentPasswordInput">Current password</label>
+              <div class="password-field"><input type="password" id="currentPasswordInput" class="text-input" autocomplete="current-password"><button type="button" class="password-toggle" data-password-toggle="currentPasswordInput" aria-label="Show current password">Show</button></div>
+            </div>
+            <div class="form-group">
+              <label for="newPasswordInput">New password</label>
+              <div class="password-field"><input type="password" id="newPasswordInput" class="text-input" autocomplete="new-password"><button type="button" class="password-toggle" data-password-toggle="newPasswordInput" aria-label="Show new password">Show</button></div>
+            </div>
+            <div class="form-group">
+              <label for="confirmNewPasswordInput">Confirm new password</label>
+              <div class="password-field"><input type="password" id="confirmNewPasswordInput" class="text-input" autocomplete="new-password"><button type="button" class="password-toggle" data-password-toggle="confirmNewPasswordInput" aria-label="Show confirmation password">Show</button></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btnChangePassword">Change Password</button>
+        </section>
+        <section class="account-section">
+          <h3>My Recipes</h3>
+          <div class="account-recipe-list" id="myRecipesList"></div>
+        </section>
+        <section class="account-section">
+          <h3>My Favorites</h3>
+          <div class="account-recipe-list" id="myFavoritesList"></div>
+        </section>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-light" id="btnAccountSignOut">Sign Out</button></div>
+    </div>
+  </div>
+
   <script>
     (function () {
       'use strict';
@@ -1451,7 +1470,6 @@
         origin: 'ALL',
         course: 'ALL',
         tag: 'ALL',
-        favoritesOnly: false,
         quickOnly: false,
         sortBy: 'mealType'
       };
@@ -1463,6 +1481,10 @@
       // 🔒 AUTHENTICATION LISTENERS & CONTROLS
       // =========================================================================
       let familyAccessUnsubscribe = null;
+      let favoritesUnsubscribe = null;
+      let userFavoriteIds = new Set();
+      let recipesUnsubscribe = null;
+      let metadataUnsubscribe = null;
 
       auth.onAuthStateChanged(async (user) => {
         const gate = document.getElementById('accessGateModal');
@@ -1472,10 +1494,16 @@
           familyAccessUnsubscribe();
           familyAccessUnsubscribe = null;
         }
+        if (favoritesUnsubscribe) {
+          favoritesUnsubscribe();
+          favoritesUnsubscribe = null;
+        }
+        userFavoriteIds = new Set();
 
         if (!user) {
           gate.classList.remove('unlocked');
           document.getElementById('userGreetingText').textContent = '';
+          document.getElementById('btnAccount').style.display = 'none';
           gateSignOut.style.display = 'none';
           return;
         }
@@ -1527,11 +1555,13 @@
         document.getElementById('btnNewRecipe').style.display = 'inline-flex';
         document.getElementById('btnQuickImportRecipe').style.display = 'inline-flex';
         document.getElementById('btnExportBook').style.display = 'inline-flex';
+        document.getElementById('btnAccount').style.display = 'inline-flex';
         document.getElementById('btnManageFamily').style.display = isAdmin ? 'inline-flex' : 'none';
         document.getElementById('btnCustomizeBook').style.display = isAdmin ? 'inline-flex' : 'none';
         document.getElementById('btnTriggerRestore').style.display = isAdmin ? 'inline-flex' : 'none';
 
         if (isAdmin) startFamilyAccessListener();
+        startUserFavoritesListener(user.uid);
         loadState();
       });
 
@@ -1561,20 +1591,134 @@
         });
       }
 
-     function handleGoogleSignIn() {
-  const errBanner = document.getElementById('gateErrorBanner');
+      function showGateMessage(type, message) {
+        const banner = document.getElementById('gateErrorBanner');
+        banner.className = 'status-banner ' + type;
+        banner.textContent = message;
+      }
 
-  errBanner.className = 'status-banner';
-  errBanner.textContent = 'Opening Google sign-in…';
+      function handleForgotPassword() {
+        const email = document.getElementById('familyEmailInput').value.trim();
+        if (!email) {
+          showGateMessage('error', 'Enter your email address first, then select Forgot password.');
+          document.getElementById('familyEmailInput').focus();
+          return;
+        }
+        auth.sendPasswordResetEmail(email)
+          .then(() => showGateMessage('success', 'Password-reset instructions have been sent if an account exists for that email address.'))
+          .catch(error => showGateMessage('error', error.message));
+      }
 
-  const provider = new firebase.auth.GoogleAuthProvider();
+      function startUserFavoritesListener(uid) {
+        favoritesUnsubscribe = db.collection('users').doc(uid).collection('favorites').onSnapshot((snapshot) => {
+          userFavoriteIds = new Set(snapshot.docs.map(doc => doc.id));
+          if (recipes.length) renderAll();
+          if (document.getElementById('accountModal').classList.contains('open')) renderAccountModal();
+        }, error => console.error('Unable to load personal favorites:', error));
+      }
 
-  auth.signInWithRedirect(provider).catch((error) => {
-    console.error('Google redirect sign-in failed:', error.code, error.message);
-    errBanner.className = 'status-banner error';
-    errBanner.textContent = `${error.code}: ${error.message}`;
-  });
-}
+      function isRecipeFavorited(recipeId) {
+        return userFavoriteIds.has(recipeId);
+      }
+
+      function toggleFavorite(recipeId) {
+        const user = auth.currentUser;
+        if (!user) return;
+        const ref = db.collection('users').doc(user.uid).collection('favorites').doc(recipeId);
+        if (isRecipeFavorited(recipeId)) {
+          ref.delete().catch(error => alert('Unable to remove favorite: ' + error.message));
+        } else {
+          ref.set({ recipeId, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .catch(error => alert('Unable to save favorite: ' + error.message));
+        }
+      }
+
+      function renderAccountModal() {
+        const user = auth.currentUser;
+        if (!user) return;
+        document.getElementById('accountDisplayName').value = user.displayName || '';
+        document.getElementById('accountEmailText').textContent = user.email || '';
+        const mine = recipes.filter(recipe => recipe.submittedByUid === user.uid);
+        const favorites = recipes.filter(recipe => isRecipeFavorited(recipe.id));
+        renderAccountRecipeList('myRecipesList', mine, 'You have not submitted any recipes yet.');
+        renderAccountRecipeList('myFavoritesList', favorites, 'You have not favorited any recipes yet.');
+      }
+
+      function renderAccountRecipeList(containerId, list, emptyText) {
+        const container = document.getElementById(containerId);
+        if (!list.length) {
+          container.innerHTML = `<p class="account-empty">${escapeHtml(emptyText)}</p>`;
+          return;
+        }
+        container.innerHTML = list.map(recipe => `
+          <div class="account-recipe-row">
+            <div><strong>${escapeHtml(recipe.title)}</strong><span>${escapeHtml(normalizeMealType(recipe.mealType || recipe.timeOfDay))} · ${escapeHtml(recipe.course || 'Recipe')}</span></div>
+            <button type="button" class="btn btn-light btn-sm" data-account-recipe-id="${escapeHtml(recipe.id)}">View</button>
+          </div>
+        `).join('');
+      }
+
+      async function saveDisplayName() {
+        const user = auth.currentUser;
+        const name = document.getElementById('accountDisplayName').value.trim();
+        const banner = document.getElementById('accountBanner');
+        if (!user) return;
+        if (!name) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Please enter a display name.';
+          return;
+        }
+        try {
+          await user.updateProfile({ displayName: name });
+          await db.collection('users').doc(user.uid).set({ displayName: name, email: user.email || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          await db.collection('authorizedMembers').doc(user.uid).set({ displayName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          document.getElementById('userGreetingText').textContent = `👋 ${name}`;
+          banner.className = 'status-banner success';
+          banner.textContent = 'Your display name has been saved. New recipes will show this name as the submitter.';
+        } catch (error) {
+          banner.className = 'status-banner error';
+          banner.textContent = error.message;
+        }
+      }
+
+      async function changePassword() {
+        const user = auth.currentUser;
+        const currentPassword = document.getElementById('currentPasswordInput').value;
+        const newPassword = document.getElementById('newPasswordInput').value;
+        const confirmPassword = document.getElementById('confirmNewPasswordInput').value;
+        const banner = document.getElementById('accountBanner');
+        if (!user || !user.email) return;
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Complete all password fields.';
+          return;
+        }
+        if (newPassword.length < 6) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Firebase requires passwords to be at least 6 characters.';
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'The new-password entries do not match.';
+          return;
+        }
+        try {
+          const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+          await user.reauthenticateWithCredential(credential);
+          await user.updatePassword(newPassword);
+          document.getElementById('currentPasswordInput').value = '';
+          document.getElementById('newPasswordInput').value = '';
+          document.getElementById('confirmNewPasswordInput').value = '';
+          banner.className = 'status-banner success';
+          banner.textContent = 'Your password has been changed.';
+        } catch (error) {
+          banner.className = 'status-banner error';
+          banner.textContent = error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential'
+            ? 'Your current password was not accepted.'
+            : error.message;
+        }
+      }
 
       function handleEmailAuth() {
         const email = document.getElementById('familyEmailInput').value.trim();
@@ -2076,11 +2220,19 @@
 
       // Firestore Real-Time Database Connection
       function loadState() {
-        db.collection("recipes").onSnapshot((snapshot) => {
+        if (recipesUnsubscribe) return;
+        recipesUnsubscribe = db.collection("recipes").onSnapshot((snapshot) => {
           recipes = [];
           if (snapshot.empty) {
             DEFAULT_RECIPES.forEach(dr => {
-              db.collection("recipes").add({ ...dr, updatedAt: Date.now() });
+              const user = auth.currentUser;
+              db.collection("recipes").add({
+                ...dr,
+                submittedByUid: user ? user.uid : '',
+                submittedByName: user ? (user.displayName || user.email || 'Family Member') : 'Family Recipe',
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: Date.now()
+              });
             });
             return;
           }
@@ -2097,7 +2249,7 @@
           console.error("Firestore loading error: ", error);
         });
 
-        db.collection("metadata").doc("cookbookSettings").onSnapshot((doc) => {
+        metadataUnsubscribe = db.collection("metadata").doc("cookbookSettings").onSnapshot((doc) => {
           if (doc.exists) {
             cookbookMeta = doc.data();
             renderHeaderMeta();
@@ -2146,8 +2298,6 @@
           renderAll();
         });
 
-        const favChip = document.getElementById('chipFavoritesOnly');
-        favChip.classList.toggle('active', activeFilters.favoritesOnly);
         const quickChip = document.getElementById('chipQuickMeals');
         quickChip.classList.toggle('active', activeFilters.quickOnly);
       }
@@ -2172,7 +2322,6 @@
           if (activeFilters.origin !== 'ALL' && r.origin !== activeFilters.origin) return false;
           if (activeFilters.course !== 'ALL' && r.course !== activeFilters.course) return false;
           if (activeFilters.tag !== 'ALL' && !(r.tags || []).includes(activeFilters.tag)) return false;
-          if (activeFilters.favoritesOnly && !r.favorite) return false;
           const totalTime = (Number(r.prepMins) || 0) + (Number(r.cookMins) || 0);
           if (activeFilters.quickOnly && totalTime > 30) return false;
           if (q) {
@@ -2259,10 +2408,11 @@
               </div>
               <h3 class="card-title">${escapeHtml(recipe.title)}</h3>
               <p class="card-desc">${escapeHtml(recipe.story || recipe.myAdjustments || 'Click to view full ingredients, steps, and family cooking adjustments.')}</p>
+              <p style="font-size:.8rem; color:var(--text-muted); margin:0 0 .65rem;">Submitted by: ${escapeHtml(recipe.submittedByName || 'Family Recipe')}</p>
               <div class="card-meta">
                 <span>⏱️ ${totalMins} mins • 🍽️ Serves ${escapeHtml(recipe.servings)}</span>
-                <button type="button" class="favorite-btn ${recipe.favorite ? 'active' : ''}" title="Toggle Family Favorite" aria-label="Favorite">
-                  ${recipe.favorite ? '♥' : '♡'}
+                <button type="button" class="favorite-btn ${isRecipeFavorited(recipe.id) ? 'active' : ''}" title="Toggle My Favorite" aria-label="Toggle favorite" aria-pressed="${isRecipeFavorited(recipe.id)}">
+                  ${isRecipeFavorited(recipe.id) ? '♥' : '♡'}
                 </button>
               </div>
             </div>
@@ -2270,7 +2420,7 @@
           const favBtn = card.querySelector('.favorite-btn');
           favBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            db.collection("recipes").doc(recipe.id).update({ favorite: !recipe.favorite });
+            toggleFavorite(recipe.id);
           });
           card.addEventListener('click', () => {
             openRecipeDetail(recipe.id);
@@ -2291,7 +2441,6 @@
         activeFilters.origin = 'ALL';
         activeFilters.course = 'ALL';
         activeFilters.tag = 'ALL';
-        activeFilters.favoritesOnly = false;
         activeFilters.quickOnly = false;
         document.getElementById('searchInput').value = '';
         renderAll();
@@ -2342,6 +2491,7 @@
               <span class="badge badge-course">${escapeHtml(recipe.course)}</span>
             </div>
             <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.5rem;">${tagsHtml}</div>
+            <p style="font-size:.85rem; color:var(--text-muted); margin-top:.85rem;">Submitted by: ${escapeHtml(recipe.submittedByName || 'Family Recipe')}</p>
           </div>
           ${storyHtml}
           <div class="detail-meta-bar">
@@ -2642,7 +2792,9 @@
           prepMins: Math.max(0, parseInt(document.getElementById('editPrepMins').value, 10) || 0),
           cookMins: Math.max(0, parseInt(document.getElementById('editCookMins').value, 10) || 0),
           tags,
-          favorite: existingRecipe ? Boolean(existingRecipe.favorite) : false,
+          submittedByUid: existingRecipe ? (existingRecipe.submittedByUid || '') : (auth.currentUser ? auth.currentUser.uid : ''),
+          submittedByName: existingRecipe ? (existingRecipe.submittedByName || 'Family Recipe') : (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
+          submittedAt: existingRecipe ? (existingRecipe.submittedAt || null) : firebase.firestore.FieldValue.serverTimestamp(),
           story: document.getElementById('editStory').value.trim(),
           myAdjustments: document.getElementById('editMyAdjustments').value.trim(),
           sourceUrl: document.getElementById('editSourceUrl').value.trim(),
@@ -2677,8 +2829,8 @@
       // =========================================================================
       function bindEvents() {
         // Sign In Events
-        document.getElementById('btnGoogleSignIn').addEventListener('click', handleGoogleSignIn);
         document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
+        document.getElementById('btnForgotPassword').addEventListener('click', handleForgotPassword);
         document.getElementById('btnCreateEmailAccount').addEventListener('click', handleEmailSignUp);
         document.getElementById('btnGateSignOut').addEventListener('click', () => auth.signOut());
         document.getElementById('btnManageFamily').addEventListener('click', () => document.getElementById('familyAccessModal').classList.add('open'));
@@ -2696,6 +2848,37 @@
           if (e.key === 'Enter') handleEmailAuth();
         });
         document.getElementById('btnSignOut').addEventListener('click', handleSignOut);
+        document.getElementById('btnAccount').addEventListener('click', () => {
+          document.getElementById('accountBanner').className = 'status-banner';
+          document.getElementById('accountBanner').textContent = '';
+          renderAccountModal();
+          document.getElementById('accountModal').classList.add('open');
+        });
+        document.getElementById('btnCloseAccount').addEventListener('click', () => document.getElementById('accountModal').classList.remove('open'));
+        document.getElementById('btnSaveDisplayName').addEventListener('click', saveDisplayName);
+        document.getElementById('btnChangePassword').addEventListener('click', changePassword);
+        document.getElementById('btnAccountSignOut').addEventListener('click', () => auth.signOut());
+        document.getElementById('myRecipesList').addEventListener('click', (event) => {
+          const button = event.target.closest('[data-account-recipe-id]');
+          if (!button) return;
+          document.getElementById('accountModal').classList.remove('open');
+          openRecipeDetail(button.dataset.accountRecipeId);
+        });
+        document.getElementById('myFavoritesList').addEventListener('click', (event) => {
+          const button = event.target.closest('[data-account-recipe-id]');
+          if (!button) return;
+          document.getElementById('accountModal').classList.remove('open');
+          openRecipeDetail(button.dataset.accountRecipeId);
+        });
+        document.querySelectorAll('[data-password-toggle]').forEach(button => {
+          button.addEventListener('click', () => {
+            const input = document.getElementById(button.dataset.passwordToggle);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            button.textContent = showing ? 'Show' : 'Hide';
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+          });
+        });
 
         // Filters & Search
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -2705,10 +2888,6 @@
         document.getElementById('sortSelect').addEventListener('change', (e) => {
           activeFilters.sortBy = e.target.value;
           renderRecipeGrid();
-        });
-        document.getElementById('chipFavoritesOnly').addEventListener('click', () => {
-          activeFilters.favoritesOnly = !activeFilters.favoritesOnly;
-          renderAll();
         });
         document.getElementById('chipQuickMeals').addEventListener('click', () => {
           activeFilters.quickOnly = !activeFilters.quickOnly;
@@ -2775,9 +2954,13 @@
                 data.recipes.forEach(r => {
                   const cleaned = {
                     ...r,
-                    mealType: normalizeMealType(r.mealType || r.timeOfDay)
+                    mealType: normalizeMealType(r.mealType || r.timeOfDay),
+                    submittedByUid: r.submittedByUid || (auth.currentUser ? auth.currentUser.uid : ''),
+                    submittedByName: r.submittedByName || (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
+                    submittedAt: r.submittedAt || firebase.firestore.FieldValue.serverTimestamp()
                   };
                   delete cleaned.id;
+                  delete cleaned.favorite;
                   db.collection("recipes").add(cleaned);
                 });
                 if (data.cookbookMeta) {
@@ -2788,9 +2971,13 @@
                 data.forEach(r => {
                   const cleaned = {
                     ...r,
-                    mealType: normalizeMealType(r.mealType || r.timeOfDay)
+                    mealType: normalizeMealType(r.mealType || r.timeOfDay),
+                    submittedByUid: r.submittedByUid || (auth.currentUser ? auth.currentUser.uid : ''),
+                    submittedByName: r.submittedByName || (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
+                    submittedAt: r.submittedAt || firebase.firestore.FieldValue.serverTimestamp()
                   };
                   delete cleaned.id;
+                  delete cleaned.favorite;
                   db.collection("recipes").add(cleaned);
                 });
               }
