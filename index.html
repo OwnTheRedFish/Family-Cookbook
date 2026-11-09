@@ -14,7 +14,6 @@
 
  <link rel="stylesheet" href="./css/styles.css">
 </head>
-  
 <body>
 
   <!-- Family Access Authentication Panel -->
@@ -22,11 +21,20 @@
     <div class="gate-card">
       <h2>👪 Family Kitchen</h2>
       <p>Sign in with your email and password, or create an account. New accounts require approval from the cookbook administrator.</p>
-      <div id="gateErrorBanner" class="status-banner"></div>
+      <div id="gateErrorBanner" class="status-banner" role="status" aria-live="polite"></div>
 
       <form id="emailLoginForm" onsubmit="return false;">
-        <input type="email" id="familyEmailInput" class="text-input" placeholder="Email address..." style="text-align: center; margin-bottom: 0.75rem;" autocomplete="username">
-        <div class="password-field" style="margin-bottom: 1rem;">
+        <div class="form-group" style="text-align:left; margin-bottom:.75rem;">
+          <label for="familyDisplayNameInput">Name shown in the cookbook <span aria-hidden="true">*</span></label>
+          <input type="text" id="familyDisplayNameInput" class="text-input" placeholder="e.g., Aunt Mel" maxlength="80" autocomplete="name" aria-describedby="familyDisplayNameHelp">
+          <small id="familyDisplayNameHelp" style="display:block; color:var(--text-muted); margin-top:.3rem;">Required only when creating an account. Your email and password remain your separate sign-in credentials.</small>
+        </div>
+        <div class="form-group" style="text-align:left; margin-bottom:.75rem;">
+          <label for="familyEmailInput">Email address</label>
+          <input type="email" id="familyEmailInput" class="text-input" placeholder="Email address..." autocomplete="username">
+        </div>
+        <div class="password-field" style="margin-bottom: 1rem; text-align:left;">
+          <label for="familyPasswordInput">Password</label>
           <input type="password" id="familyPasswordInput" class="text-input" placeholder="Password..." autocomplete="current-password">
           <button type="button" class="password-toggle" data-password-toggle="familyPasswordInput" aria-label="Show password">Show</button>
         </div>
@@ -103,7 +111,7 @@
           <span>Quick Filters</span>
         </div>
         <div class="filter-chips">
-          <span class="chip" id="chipQuickMeals">⚡ Under 30 Mins</span>
+          <button type="button" class="chip" id="chipQuickMeals" aria-pressed="false">⚡ Under 30 Mins</button>
         </div>
       </div>
     </aside>
@@ -128,8 +136,8 @@
   </div>
 
   <!-- MODAL 1: Recipe Detail & Interactive Cooking View -->
-  <div class="modal-backdrop" id="detailModal">
-    <div class="modal-panel">
+  <div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+    <div class="modal-panel" tabindex="-1">
       <div class="modal-header">
         <h2 id="detailModalTitle">Recipe Title</h2>
         <div style="display:flex; gap:0.5rem;">
@@ -144,14 +152,14 @@
   </div>
 
   <!-- MODAL 2: Add / Edit Recipe -->
-  <div class="modal-backdrop" id="editorModal">
-    <div class="modal-panel">
+  <div class="modal-backdrop" id="editorModal" role="dialog" aria-modal="true" aria-labelledby="editorModalHeading">
+    <div class="modal-panel" tabindex="-1">
       <div class="modal-header">
         <h2 id="editorModalHeading">Add Family Recipe</h2>
         <button type="button" class="btn btn-light btn-sm" id="btnCloseEditorModal">✕ Cancel</button>
       </div>
       <div class="modal-body">
-        <div id="editorValidationBanner" class="status-banner"></div>
+        <div id="editorValidationBanner" class="status-banner" role="status" aria-live="polite"></div>
         <!-- Smart Paste & Parse Online Recipe Importer -->
         <div class="import-box" id="recipeImportBox">
           <div class="import-box-header" id="importBoxToggle">
@@ -276,10 +284,10 @@
   </div>
 
   <!-- MODAL 3: Customize Cookbook Title & Dedication -->
-  <div class="modal-backdrop" id="dedicationModal">
-    <div class="modal-panel" style="max-width: 600px;">
+  <div class="modal-backdrop" id="dedicationModal" role="dialog" aria-modal="true" aria-labelledby="dedicationModalTitle">
+    <div class="modal-panel" tabindex="-1" style="max-width: 600px;">
       <div class="modal-header">
-        <h2>✒️ Cookbook Title &amp; Family Dedication</h2>
+        <h2 id="dedicationModalTitle">✒️ Cookbook Title &amp; Family Dedication</h2>
         <button type="button" class="btn btn-light btn-sm" id="btnCloseDedicationModal">✕ Close</button>
       </div>
       <div class="modal-body">
@@ -298,10 +306,10 @@
     </div>
   </div>
 
-  <div class="modal-backdrop" id="familyAccessModal">
-    <div class="modal-panel" style="max-width:760px;">
+  <div class="modal-backdrop" id="familyAccessModal" role="dialog" aria-modal="true" aria-labelledby="familyAccessModalTitle">
+    <div class="modal-panel" tabindex="-1" style="max-width:760px;">
       <div class="modal-header">
-        <h2>Family Access</h2>
+        <h2 id="familyAccessModalTitle">Family Access</h2>
         <button type="button" class="btn btn-light btn-sm" id="btnCloseFamilyAccess">Close</button>
       </div>
       <div class="modal-body">
@@ -313,14 +321,14 @@
 
 
   <!-- Account modal -->
-  <div class="modal-backdrop" id="accountModal">
-    <div class="modal-panel" style="max-width:760px;">
+  <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+    <div class="modal-panel" tabindex="-1" style="max-width:760px;">
       <div class="modal-header">
-        <h2>My Account</h2>
+        <h2 id="accountModalTitle">My Account</h2>
         <button type="button" class="btn btn-light btn-sm" id="btnCloseAccount">✕ Close</button>
       </div>
       <div class="modal-body">
-        <div id="accountBanner" class="status-banner"></div>
+        <div id="accountBanner" class="status-banner" role="status" aria-live="polite"></div>
         <section class="account-section">
           <h3>Profile</h3>
           <label for="accountDisplayName">Display name</label>
@@ -500,6 +508,7 @@
         userFavoriteIds = new Set();
 
         if (!user) {
+          stopCookbookListenersAndClearState();
           gate.classList.remove('unlocked');
           document.getElementById('userGreetingText').textContent = '';
           document.getElementById('btnAccount').style.display = 'none';
@@ -515,11 +524,21 @@
           try {
             let memberSnap = await memberRef.get();
             if (!memberSnap.exists) {
+              // A new email/password account receives its cookbook name immediately
+              // after Firebase Auth creates it. Do not create a blank enrollment record
+              // in the short interval before that profile update completes.
+              if (!user.displayName) {
+                gate.classList.remove('unlocked');
+                gateSignOut.style.display = 'inline-flex';
+                showGateMessage('success', 'Finishing your account setup…');
+                return;
+              }
               await memberRef.set({
                 email: user.email || '',
-                displayName: user.displayName || '',
+                displayName: user.displayName,
                 status: 'pending',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
               });
               memberSnap = await memberRef.get();
             }
@@ -671,9 +690,10 @@
           await user.updateProfile({ displayName: name });
           await db.collection('users').doc(user.uid).set({ displayName: name, email: user.email || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
           await db.collection('authorizedMembers').doc(user.uid).set({ displayName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          await updateSubmittedRecipeNames(user.uid, name);
           document.getElementById('userGreetingText').textContent = `👋 ${name}`;
           banner.className = 'status-banner success';
-          banner.textContent = 'Your display name has been saved. New recipes will show this name as the submitter.';
+          banner.textContent = 'Your cookbook name has been saved and updated on recipes you added.';
         } catch (error) {
           banner.className = 'status-banner error';
           banner.textContent = error.message;
@@ -736,10 +756,22 @@
         });
       }
 
-      function handleEmailSignUp() {
+      async function handleEmailSignUp() {
+        const name = document.getElementById('familyDisplayNameInput').value.trim();
         const email = document.getElementById('familyEmailInput').value.trim();
         const password = document.getElementById('familyPasswordInput').value;
         const errBanner = document.getElementById('gateErrorBanner');
+        if (!name) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Enter the name you want displayed in the cookbook before creating an account.';
+          document.getElementById('familyDisplayNameInput').focus();
+          return;
+        }
+        if (name.length > 80) {
+          errBanner.className = 'status-banner error';
+          errBanner.textContent = 'Your cookbook name must be 80 characters or fewer.';
+          return;
+        }
         if (!email || !password) {
           errBanner.className = 'status-banner error';
           errBanner.textContent = 'Enter an email address and choose a password.';
@@ -750,12 +782,29 @@
           errBanner.textContent = 'Firebase requires passwords to be at least 6 characters.';
           return;
         }
-        auth.createUserWithEmailAndPassword(email, password).catch((error) => {
+        try {
+          const credential = await auth.createUserWithEmailAndPassword(email, password);
+          await credential.user.updateProfile({ displayName: name });
+          await db.collection('users').doc(credential.user.uid).set({
+            displayName: name,
+            email: credential.user.email || email,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          await db.collection('authorizedMembers').doc(credential.user.uid).set({
+            email: credential.user.email || email,
+            displayName: name,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          showGateMessage('success', 'Your account was created. Reloading your account setup…');
+          window.setTimeout(() => window.location.reload(), 250);
+        } catch (error) {
           errBanner.className = 'status-banner error';
           errBanner.textContent = error.code === 'auth/email-already-in-use'
             ? 'An account already exists for this email. Select Sign In instead.'
             : error.message;
-        });
+        }
       }
 
       function handleSignOut() {
@@ -772,6 +821,51 @@
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
+      }
+
+      function safeHttpUrl(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try {
+          const parsed = new URL(raw);
+          return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
+        } catch (_) {
+          return '';
+        }
+      }
+
+      function toEpochMillis(value) {
+        if (typeof value === 'number') return value;
+        if (value && typeof value.toMillis === 'function') return value.toMillis();
+        if (value && typeof value.seconds === 'number') return value.seconds * 1000;
+        return 0;
+      }
+
+      function stopCookbookListenersAndClearState() {
+        if (recipesUnsubscribe) { recipesUnsubscribe(); recipesUnsubscribe = null; }
+        if (metadataUnsubscribe) { metadataUnsubscribe(); metadataUnsubscribe = null; }
+        recipes = [];
+        currentViewingRecipeId = null;
+        currentEditingRecipeId = null;
+        document.getElementById('recipeGrid').innerHTML = '';
+        document.getElementById('resultsCountText').textContent = '';
+        document.querySelectorAll('.modal-backdrop').forEach(modal => modal.classList.remove('open'));
+      }
+
+      async function updateSubmittedRecipeNames(uid, name) {
+        const mine = recipes.filter(recipe => recipe.submittedByUid === uid && recipe.submittedByName !== name);
+        for (let start = 0; start < mine.length; start += 400) {
+          const batch = db.batch();
+          mine.slice(start, start + 400).forEach(recipe => {
+            batch.update(db.collection('recipes').doc(recipe.id), {
+              submittedByName: name,
+              lastEditedByUid: uid,
+              lastEditedByName: name,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+          await batch.commit();
+        }
       }
 
       // Fraction Display Engine
@@ -1223,16 +1317,7 @@
         recipesUnsubscribe = db.collection("recipes").onSnapshot((snapshot) => {
           recipes = [];
           if (snapshot.empty) {
-            DEFAULT_RECIPES.forEach(dr => {
-              const user = auth.currentUser;
-              db.collection("recipes").add({
-                ...dr,
-                submittedByUid: user ? user.uid : '',
-                submittedByName: user ? (user.displayName || user.email || 'Family Member') : 'Family Recipe',
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: Date.now()
-              });
-            });
+            renderAll();
             return;
           }
           snapshot.forEach((doc) => {
@@ -1257,7 +1342,10 @@
       }
 
       function saveMeta() {
-        db.collection("metadata").doc("cookbookSettings").set(cookbookMeta)
+        db.collection("metadata").doc("cookbookSettings").set({
+          ...cookbookMeta,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
           .catch(err => console.error("Error saving metadata: ", err));
       }
 
@@ -1299,17 +1387,20 @@
 
         const quickChip = document.getElementById('chipQuickMeals');
         quickChip.classList.toggle('active', activeFilters.quickOnly);
+        quickChip.setAttribute('aria-pressed', String(activeFilters.quickOnly));
       }
 
       function buildChipGroup(containerId, items, activeValue, onSelect) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
         items.forEach(item => {
-          const span = document.createElement('span');
-          span.className = 'chip' + (activeValue === item ? ' active' : '');
-          span.textContent = item === 'ALL' ? 'All' : item;
-          span.addEventListener('click', () => onSelect(item));
-          container.appendChild(span);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'chip' + (activeValue === item ? ' active' : '');
+          button.textContent = item === 'ALL' ? 'All' : item;
+          button.setAttribute('aria-pressed', String(activeValue === item));
+          button.addEventListener('click', () => onSelect(item));
+          container.appendChild(button);
         });
       }
 
@@ -1359,7 +1450,7 @@
               return tA - tB;
             }
             case 'recent':
-              return (b.updatedAt || 0) - (a.updatedAt || 0);
+              return toEpochMillis(b.updatedAt) - toEpochMillis(a.updatedAt);
             case 'title-asc':
             default:
               return (a.title || '').localeCompare(b.title || '');
@@ -1395,6 +1486,9 @@
         list.forEach(recipe => {
           const card = document.createElement('article');
           card.className = 'recipe-card';
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+          card.setAttribute('aria-label', `View recipe: ${recipe.title || 'Untitled recipe'}`);
           const totalMins = (Number(recipe.prepMins) || 0) + (Number(recipe.cookMins) || 0);
           const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
           card.innerHTML = `
@@ -1423,6 +1517,12 @@
           });
           card.addEventListener('click', () => {
             openRecipeDetail(recipe.id);
+          });
+          card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openRecipeDetail(recipe.id);
+            }
           });
           grid.appendChild(card);
         });
@@ -1461,6 +1561,7 @@
         const scaledServings = Math.max(1, Math.round((Number(recipe.servings) || 4) * currentScaleMultiplier));
         const currentMeal = normalizeMealType(recipe.mealType || recipe.timeOfDay);
         const tagsHtml = (recipe.tags || []).map(t => `<span class="chip" style="cursor:default;">#${escapeHtml(t)}</span>`).join(' ');
+        const safeSourceUrl = safeHttpUrl(recipe.sourceUrl);
         let storyHtml = '';
         if (recipe.story && recipe.story.trim()) {
           storyHtml = `<div class="detail-story">“${escapeHtml(recipe.story)}”</div>`;
@@ -1471,14 +1572,14 @@
             <div class="family-notes-box">
               <h4>👩‍🍳 How I Actually Cook It (Family Modifications)</h4>
               <p>${escapeHtml(recipe.myAdjustments)}</p>
-              ${recipe.sourceUrl ? `<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>` : ''}
+              ${safeSourceUrl ? `<p style="margin-top:0.5rem; font-size:0.82rem;">Reference Link: <a href="${escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeSourceUrl)}</a></p>` : ''}
             </div>
           `;
-        } else if (recipe.sourceUrl) {
+        } else if (safeSourceUrl) {
           adjustmentsHtml = `
             <div class="family-notes-box">
               <h4>🔗 Reference Link</h4>
-              <p style="font-size:0.85rem;"><a href="${escapeHtml(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(recipe.sourceUrl)}</a></p>
+              <p style="font-size:0.85rem;"><a href="${escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(safeSourceUrl)}</a></p>
             </div>
           `;
         }
@@ -1516,10 +1617,10 @@
               <div class="section-heading">
                 <span>Ingredients</span>
                 <div class="scale-buttons">
-                  <button type="button" class="scale-btn ${currentScaleMultiplier === 0.5 ? 'active' : ''}" data-scale="0.5">½×</button>
-                  <button type="button" class="scale-btn ${currentScaleMultiplier === 1 ? 'active' : ''}" data-scale="1">1×</button>
-                  <button type="button" class="scale-btn ${currentScaleMultiplier === 2 ? 'active' : ''}" data-scale="2">2×</button>
-                  <button type="button" class="scale-btn ${currentScaleMultiplier === 3 ? 'active' : ''}" data-scale="3">3×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 0.5 ? 'active' : ''}" data-scale="0.5" aria-pressed="${currentScaleMultiplier === 0.5}">½×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 1 ? 'active' : ''}" data-scale="1" aria-pressed="${currentScaleMultiplier === 1}">1×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 2 ? 'active' : ''}" data-scale="2" aria-pressed="${currentScaleMultiplier === 2}">2×</button>
+                  <button type="button" class="scale-btn ${currentScaleMultiplier === 3 ? 'active' : ''}" data-scale="3" aria-pressed="${currentScaleMultiplier === 3}">3×</button>
                 </div>
               </div>
               <ul class="ingredient-list" id="detailIngredientList"></ul>
@@ -1780,6 +1881,12 @@
           ? recipes.find(r => r.id === currentEditingRecipeId)
           : null;
         const selectedMealType = document.getElementById('editMealType').value;
+        const rawSourceUrl = document.getElementById('editSourceUrl').value.trim();
+        if (rawSourceUrl && !safeHttpUrl(rawSourceUrl)) {
+          banner.className = 'status-banner error';
+          banner.textContent = 'Source links must begin with http:// or https://.';
+          return;
+        }
         const recipeObj = {
           title,
           passedDownBy: '',
@@ -1796,8 +1903,10 @@
           submittedAt: existingRecipe ? (existingRecipe.submittedAt || null) : firebase.firestore.FieldValue.serverTimestamp(),
           story: document.getElementById('editStory').value.trim(),
           myAdjustments: document.getElementById('editMyAdjustments').value.trim(),
-          sourceUrl: document.getElementById('editSourceUrl').value.trim(),
-          updatedAt: Date.now(),
+          sourceUrl: safeHttpUrl(document.getElementById('editSourceUrl').value),
+          lastEditedByUid: auth.currentUser ? auth.currentUser.uid : '',
+          lastEditedByName: auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
           ingredients,
           steps
         };
@@ -1923,9 +2032,14 @@
         });
         document.getElementById('btnExportBook').addEventListener('click', () => {
           const payload = {
+            backupSchemaVersion: 2,
             cookbookMeta,
             exportedAt: new Date().toISOString(),
-            recipes
+            recipes: recipes.map(recipe => ({
+              ...recipe,
+              submittedAt: toEpochMillis(recipe.submittedAt) || null,
+              updatedAt: toEpochMillis(recipe.updatedAt) || null
+            }))
           };
           const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
@@ -1942,46 +2056,96 @@
         document.getElementById('btnTriggerRestore').addEventListener('click', () => {
           fileInput.click();
         });
+        function prepareRestoreRecipe(raw, user) {
+          if (!raw || typeof raw !== 'object' || typeof raw.title !== 'string' || !raw.title.trim()) {
+            throw new Error('Each restored recipe must have a title.');
+          }
+          if (!Array.isArray(raw.ingredients) || !Array.isArray(raw.steps)) {
+            throw new Error(`Recipe "${raw.title}" is missing ingredients or directions.`);
+          }
+          const requestedId = typeof raw.id === 'string' ? raw.id : '';
+          const id = /^[A-Za-z0-9_-]{20,128}$/.test(requestedId)
+            ? requestedId
+            : db.collection('recipes').doc().id;
+          const sourceUrl = safeHttpUrl(raw.sourceUrl || '');
+          if (raw.sourceUrl && !sourceUrl) throw new Error(`Recipe "${raw.title}" has an unsafe source URL.`);
+          return {
+            id,
+            data: {
+              title: raw.title.trim().slice(0, 160),
+              mealType: normalizeMealType(raw.mealType || raw.timeOfDay),
+              timeOfDay: normalizeMealType(raw.mealType || raw.timeOfDay),
+              origin: String(raw.origin || '').slice(0, 80),
+              course: String(raw.course || 'Main Dish').slice(0, 80),
+              servings: Math.max(1, Math.min(100, Number(raw.servings) || 4)),
+              prepMins: Math.max(0, Number(raw.prepMins) || 0),
+              cookMins: Math.max(0, Number(raw.cookMins) || 0),
+              tags: Array.isArray(raw.tags) ? raw.tags.map(tag => String(tag).trim()).filter(Boolean).slice(0, 30) : [],
+              story: String(raw.story || '').slice(0, 4000),
+              myAdjustments: String(raw.myAdjustments || '').slice(0, 4000),
+              sourceUrl,
+              ingredients: raw.ingredients.slice(0, 200),
+              steps: raw.steps.slice(0, 200),
+              submittedByUid: raw.submittedByUid || user.uid,
+              submittedByName: raw.submittedByName || user.displayName || user.email || 'Family Member',
+              submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              lastEditedByUid: user.uid,
+              lastEditedByName: user.displayName || user.email || 'Family Member',
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              restoredAt: firebase.firestore.FieldValue.serverTimestamp()
+            }
+          };
+        }
+
+        async function restoreBackupData(data) {
+          const user = auth.currentUser;
+          if (!user) throw new Error('Sign in before restoring a backup.');
+          if ((user.email || '').toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            throw new Error('Only the cookbook administrator can run a restore.');
+          }
+          const rawRecipes = Array.isArray(data) ? data : data && data.recipes;
+          if (!Array.isArray(rawRecipes) || !rawRecipes.length) throw new Error('This backup does not contain any recipes.');
+          if (rawRecipes.length > 1000) throw new Error('For safety, restore backups in groups of 1,000 recipes or fewer.');
+          const existingIds = new Set(recipes.map(recipe => recipe.id));
+          const prepared = rawRecipes.map(recipe => {
+            const preparedRecipe = prepareRestoreRecipe(recipe, user);
+            if (!existingIds.has(preparedRecipe.id)) {
+              preparedRecipe.data.submittedByUid = user.uid;
+              preparedRecipe.data.submittedByName = user.displayName || user.email || 'Family Member';
+            }
+            return preparedRecipe;
+          });
+          if (!confirm(`Restore ${prepared.length} recipe(s)? Recipes with matching backup IDs will be updated; others will be added. Download a current backup first if you want a rollback point.`)) return;
+          for (let start = 0; start < prepared.length; start += 400) {
+            const batch = db.batch();
+            prepared.slice(start, start + 400).forEach(recipe => {
+              batch.set(db.collection('recipes').doc(recipe.id), recipe.data, { merge: true });
+            });
+            await batch.commit();
+          }
+          if (data && data.cookbookMeta && typeof data.cookbookMeta === 'object') {
+            await db.collection('metadata').doc('cookbookSettings').set({
+              title: String(data.cookbookMeta.title || cookbookMeta.title).slice(0, 160),
+              subtitle: String(data.cookbookMeta.subtitle || '').slice(0, 1000)
+            }, { merge: true });
+          }
+          alert(`Restore complete: ${prepared.length} recipe(s) were processed.`);
+        }
+
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files && e.target.files[0];
           if (!file) return;
+          if (file.size > 5 * 1024 * 1024) {
+            alert('This backup is larger than the 5 MB restore limit. Split it into smaller files and try again.');
+            fileInput.value = '';
+            return;
+          }
           const reader = new FileReader();
-          reader.onload = () => {
+          reader.onload = async () => {
             try {
-              const data = JSON.parse(reader.result);
-              if (data && Array.isArray(data.recipes)) {
-                data.recipes.forEach(r => {
-                  const cleaned = {
-                    ...r,
-                    mealType: normalizeMealType(r.mealType || r.timeOfDay),
-                    submittedByUid: r.submittedByUid || (auth.currentUser ? auth.currentUser.uid : ''),
-                    submittedByName: r.submittedByName || (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
-                    submittedAt: r.submittedAt || firebase.firestore.FieldValue.serverTimestamp()
-                  };
-                  delete cleaned.id;
-                  delete cleaned.favorite;
-                  db.collection("recipes").add(cleaned);
-                });
-                if (data.cookbookMeta) {
-                  cookbookMeta = data.cookbookMeta;
-                  saveMeta();
-                }
-              } else if (Array.isArray(data)) {
-                data.forEach(r => {
-                  const cleaned = {
-                    ...r,
-                    mealType: normalizeMealType(r.mealType || r.timeOfDay),
-                    submittedByUid: r.submittedByUid || (auth.currentUser ? auth.currentUser.uid : ''),
-                    submittedByName: r.submittedByName || (auth.currentUser ? (auth.currentUser.displayName || auth.currentUser.email || 'Family Member') : 'Family Recipe'),
-                    submittedAt: r.submittedAt || firebase.firestore.FieldValue.serverTimestamp()
-                  };
-                  delete cleaned.id;
-                  delete cleaned.favorite;
-                  db.collection("recipes").add(cleaned);
-                });
-              }
+              await restoreBackupData(JSON.parse(reader.result));
             } catch (err) {
-              alert('Could not read JSON backup file. Please verify the file format.');
+              alert('Restore was not completed: ' + (err.message || 'Please verify the backup file format.'));
             }
           };
           reader.readAsText(file);
@@ -2048,6 +2212,11 @@
               backdrop.classList.remove('open');
             }
           });
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            document.querySelectorAll('.modal-backdrop.open').forEach(modal => modal.classList.remove('open'));
+          }
         });
       }
 
