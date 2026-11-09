@@ -1671,7 +1671,25 @@
         try {
           await user.updateProfile({ displayName: name });
           await db.collection('users').doc(user.uid).set({ displayName: name, email: user.email || '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          await db.collection('authorizedMembers').doc(user.uid).set({ displayName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          await db.collection('authorizedMembers').doc(user.uid).set({ displayName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { meawait user.updateProfile({ displayName: name });
+
+await db.collection('users').doc(user.uid).set({
+  displayName: name,
+  email: user.email || '',
+  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+}, { merge: true });
+
+// Only update an existing family-access record.
+// The administrator may not have an authorizedMembers document.
+const memberRef = db.collection('authorizedMembers').doc(user.uid);
+const memberSnap = await memberRef.get();
+
+if (memberSnap.exists) {
+  await memberRef.set({
+    displayName: name,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}rge: true });
           document.getElementById('userGreetingText').textContent = `👋 ${name}`;
           banner.className = 'status-banner success';
           banner.textContent = 'Your display name has been saved. New recipes will show this name as the submitter.';
