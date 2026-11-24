@@ -369,5 +369,145 @@
   </div>
 
 <script src="./js/app.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // Wait until app.js has attached its Firebase authentication handlers.
+    document.addEventListener('DOMContentLoaded', function () {
+      const displayNameInput = document.getElementById('familyDisplayNameInput');
+      const emailInput = document.getElementById('familyEmailInput');
+      const passwordInput = document.getElementById('familyPasswordInput');
+
+      const signInButton = document.getElementById('btnSubmitEmailAuth');
+      const createAccountButton = document.getElementById('btnCreateEmailAccount');
+      const forgotPasswordButton = document.getElementById('btnForgotPassword');
+
+      const description = document.querySelector('#accessGateModal .gate-card > p');
+      const errorBanner = document.getElementById('gateErrorBanner');
+
+      if (
+        !displayNameInput ||
+        !emailInput ||
+        !passwordInput ||
+        !signInButton ||
+        !createAccountButton ||
+        !forgotPasswordButton
+      ) {
+        console.error('Authentication form elements were not found.');
+        return;
+      }
+
+      // Find the existing name-field container and make it easy to control.
+      const displayNameField = displayNameInput.closest('.form-group');
+
+      // Create the "Create New Account" navigation button.
+      const showCreateAccountButton = document.createElement('button');
+      showCreateAccountButton.type = 'button';
+      showCreateAccountButton.id = 'btnShowCreateAccount';
+      showCreateAccountButton.className = 'btn btn-outline';
+      showCreateAccountButton.style.width = '100%';
+      showCreateAccountButton.style.justifyContent = 'center';
+      showCreateAccountButton.style.marginTop = '.65rem';
+      showCreateAccountButton.textContent = 'Create New Account';
+
+      // Create the "Back to Sign In" navigation button.
+      const showSignInButton = document.createElement('button');
+      showSignInButton.type = 'button';
+      showSignInButton.id = 'btnShowSignIn';
+      showSignInButton.className = 'btn btn-light';
+      showSignInButton.style.width = '100%';
+      showSignInButton.style.justifyContent = 'center';
+      showSignInButton.style.marginTop = '.65rem';
+      showSignInButton.textContent = 'Back to Sign In';
+
+      // Add the new navigation buttons around your existing buttons.
+      createAccountButton.insertAdjacentElement('beforebegin', showCreateAccountButton);
+      createAccountButton.insertAdjacentElement('afterend', showSignInButton);
+
+      let authMode = 'signin';
+
+      function clearGateMessage() {
+        if (errorBanner) {
+          errorBanner.className = 'status-banner';
+          errorBanner.textContent = '';
+        }
+      }
+
+      function setAuthMode(mode) {
+        authMode = mode === 'create' ? 'create' : 'signin';
+        const creatingAccount = authMode === 'create';
+
+        // Display name is only shown while creating an account.
+        if (displayNameField) {
+          displayNameField.hidden = !creatingAccount;
+        }
+
+        // Sign-in controls.
+        signInButton.hidden = creatingAccount;
+        forgotPasswordButton.hidden = creatingAccount;
+        showCreateAccountButton.hidden = creatingAccount;
+
+        // Account-creation controls.
+        createAccountButton.hidden = !creatingAccount;
+        showSignInButton.hidden = !creatingAccount;
+
+        // Update screen text and browser password-manager behavior.
+        if (creatingAccount) {
+          description.textContent =
+            'Create an account to request access to the family cookbook. New accounts require approval from the cookbook administrator.';
+
+          passwordInput.autocomplete = 'new-password';
+          passwordInput.placeholder = 'Choose a password...';
+
+          clearGateMessage();
+          displayNameInput.focus();
+        } else {
+          description.textContent =
+            'Sign in with your email and password.';
+
+          passwordInput.autocomplete = 'current-password';
+          passwordInput.placeholder = 'Password...';
+
+          clearGateMessage();
+          emailInput.focus();
+        }
+      }
+
+      // Switch from sign-in screen to create-account screen.
+      showCreateAccountButton.addEventListener('click', function () {
+        setAuthMode('create');
+      });
+
+      // Switch from create-account screen back to sign-in screen.
+      showSignInButton.addEventListener('click', function () {
+        setAuthMode('signin');
+      });
+
+      // app.js currently treats Enter in the password field as Sign In.
+      // This capture listener changes Enter to Create Account when the
+      // visitor is on the create-account screen.
+      passwordInput.addEventListener(
+        'keydown',
+        function (event) {
+          if (event.key !== 'Enter' || authMode !== 'create') {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          // Clicks the existing Create Account button, which already runs
+          // your handleEmailSignUp Firebase logic in app.js.
+          createAccountButton.click();
+        },
+        true
+      );
+
+      // Start on the Sign In screen.
+      setAuthMode('signin');
+    });
+  })();
+</script>
 </body>
 </html>
