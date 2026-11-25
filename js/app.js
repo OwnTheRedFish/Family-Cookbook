@@ -1564,11 +1564,54 @@
       // =========================================================================
       // BIND UI EVENTS
       // =========================================================================
-      function bindEvents() {
+ function setAuthMode(mode) {
+  const isCreatingAccount = mode === 'create';
+
+  const nameField = document.getElementById('createAccountNameField');
+  const signInActions = document.getElementById('signInActions');
+  const createAccountActions = document.getElementById('createAccountActions');
+  const description = document.getElementById('authModeDescription');
+  const passwordInput = document.getElementById('familyPasswordInput');
+  const banner = document.getElementById('gateErrorBanner');
+
+  nameField.hidden = !isCreatingAccount;
+  signInActions.hidden = isCreatingAccount;
+  createAccountActions.hidden = !isCreatingAccount;
+
+  description.textContent = isCreatingAccount
+    ? 'Create an account to request access to the family cookbook. New accounts require approval from the cookbook administrator.'
+    : 'Sign in with your email and password.';
+
+  passwordInput.autocomplete = isCreatingAccount
+    ? 'new-password'
+    : 'current-password';
+
+  passwordInput.placeholder = isCreatingAccount
+    ? 'Choose a password...'
+    : 'Password...';
+
+  banner.className = 'status-banner';
+  banner.textContent = '';
+
+  if (isCreatingAccount) {
+    document.getElementById('familyDisplayNameInput').focus();
+  } else {
+    document.getElementById('familyEmailInput').focus();
+  }
+}   
+        function bindEvents() {
         // Sign In Events
-        document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
-        document.getElementById('btnForgotPassword').addEventListener('click', handleForgotPassword);
-        document.getElementById('btnCreateEmailAccount').addEventListener('click', handleEmailSignUp);
+    document.getElementById('btnSubmitEmailAuth').addEventListener('click', handleEmailAuth);
+    document.getElementById('btnForgotPassword').addEventListener('click', handleForgotPassword);
+    document.getElementById('btnCreateEmailAccount').addEventListener('click', handleEmailSignUp);
+
+    document.getElementById('btnShowCreateAccount').addEventListener('click', () => {
+  setAuthMode('create');
+});
+
+    document.getElementById('btnShowSignIn').addEventListener('click', () => {
+  setAuthMode('signin');
+});lSignUp);
         document.getElementById('btnGateSignOut').addEventListener('click', () => auth.signOut());
         document.getElementById('btnManageFamily').addEventListener('click', () => document.getElementById('familyAccessModal').classList.add('open'));
         document.getElementById('btnCloseFamilyAccess').addEventListener('click', () => document.getElementById('familyAccessModal').classList.remove('open'));
@@ -1582,8 +1625,16 @@
           catch (error) { alert('Unable to update family access: ' + error.message); button.disabled = false; }
         });
         document.getElementById('familyPasswordInput').addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') handleEmailAuth();
-        });
+  if (e.key !== 'Enter') return;
+
+  const isCreatingAccount = !document.getElementById('createAccountActions').hidden;
+
+  if (isCreatingAccount) {
+    handleEmailSignUp();
+  } else {
+    handleEmailAuth();
+  }
+});
         document.getElementById('btnSignOut').addEventListener('click', handleSignOut);
         document.getElementById('btnAccount').addEventListener('click', () => {
           document.getElementById('accountBanner').className = 'status-banner';
@@ -1851,4 +1902,5 @@
 
       // Initialize Application Events
       bindEvents();
+setAuthMode('signin');
     })();
